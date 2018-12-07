@@ -3,7 +3,7 @@
 
 import 'goog:proto.Game.State';
 import 'goog:proto.GamesData';
-import 'goog:proto.Operation';
+import 'goog:proto.Transaction';
 import {WritableStream} from 'base/js/stream';
 
 
@@ -22,16 +22,16 @@ export default class MockGamesClient {
             totalDepositedPln: 50,
             totalPaidPln: 18,
             totalWithdrawnPln: 0,
-            operationList: [
+            transactionList: [
               {
                 timestamp: {secondsSinceEpoch: 1542890700},  // 2018-11-22 13:45
-                type: proto.Operation.Type.PAYMENT,
+                type: proto.Transaction.Type.PAYMENT,
                 amountPln: 18,
                 game: {id: '9'}
               },
               {
                 timestamp: {secondsSinceEpoch: 1542870600},  // 2018-11-22 08:10
-                type: proto.Operation.Type.DEPOSIT,
+                type: proto.Transaction.Type.DEPOSIT,
                 amountPln: 50,
                 depositSource: 'volleyball JD1'
               },
@@ -218,67 +218,65 @@ export default class MockGamesClient {
     return Promise.resolve(null);
   }
 
-  gameSignUpPlayer(request, metadata) {
-    const game = this._gamesData.getGameList()[3];
-    goog.asserts.assert(game.getId() == request.getGame().getId());
-    game.addSignedUp(request.getPlayer());
-    const player = this._gamesData.getPlayerList()[0];
-    goog.asserts.assert(player.getFacebookId() ==
-                        request.getPlayer().getFacebookId());
-    player.getPayments().setBalancePln(
-      player.getPayments().getBalancePln() - game.getPricePln());
-    player.getPayments().setTotalPaidPln(
-      player.getPayments().getTotalPaidPln() + game.getPricePln());
-    player.getPayments().addOperation(proto.Operation.fromObject({
-      timestamp: {secondsSinceEpoch: 1543575600},  // 2018-11-30 12:00
-      type: proto.Operation.Type.PAYMENT,
-      amountPln: game.getPricePln(),
-      game: {id: game.getId()}
-    }));
+  gameSetPlayerSignedUp(request, metadata) {
+    if (request.getIsSignedUp()) {
+      const game = this._gamesData.getGameList()[3];
+      goog.asserts.assert(game.getId() == request.getGame().getId());
+      game.addSignedUp(request.getPlayer());
+      const player = this._gamesData.getPlayerList()[0];
+      goog.asserts.assert(player.getFacebookId() ==
+                          request.getPlayer().getFacebookId());
+      player.getPayments().setBalancePln(
+        player.getPayments().getBalancePln() - game.getPricePln());
+      player.getPayments().setTotalPaidPln(
+        player.getPayments().getTotalPaidPln() + game.getPricePln());
+      player.getPayments().addTransaction(proto.Transaction.fromObject({
+        timestamp: {secondsSinceEpoch: 1543575600},  // 2018-11-30 12:00
+        type: proto.Transaction.Type.PAYMENT,
+        amountPln: game.getPricePln(),
+        game: {id: game.getId()}
+      }));
+    } else {
+      const game = this._gamesData.getGameList()[2];
+      goog.asserts.assert(game.getId() == request.getGame().getId());
+      const player = this._gamesData.getPlayerList()[0];
+      goog.asserts.assert(player.getFacebookId() ==
+                          request.getPlayer().getFacebookId());
+      game.setSignedUpList(
+        game.getSignedUpList().filter(
+          p => p.getFacebookId() != player.getFacebookId())
+        .concat([game.getWaitingList()[0]]));
+      game.setWaitingList(game.getWaitingList().slice(1));
+      const fee = 9;
+      const returned = game.getPricePln() - fee;
+      player.getPayments().setBalancePln(
+        player.getPayments().getBalancePln() + returned);
+      player.getPayments().setTotalPaidPln(
+        player.getPayments().getTotalPaidPln() - returned);
+      player.getPayments().addTransaction(proto.Transaction.fromObject({
+        timestamp: {secondsSinceEpoch: 1543575600},  // 2018-11-30 12:00
+        type: proto.Transaction.Type.RETURN,
+        amountPln: game.getPricePln(),
+        game: {id: game.getId()}
+      }));
+      player.getPayments().addTransaction(proto.Transaction.fromObject({
+        timestamp: {secondsSinceEpoch: 1543575600},  // 2018-11-30 12:00
+        type: proto.Transaction.Type.CANCELATION_FEE,
+        amountPln: fee,
+        game: {id: game.getId()}
+      }));
+    }
     this._gamesDataStream.put(this._gamesData);
     return Promise.resolve(null);    
   }
 
-  gameCancelPlayer(request, metadata) {
+  gameSetNotifyPlayerIfPlaceFree(request, metadata) {
     const game = this._gamesData.getGameList()[2];
     goog.asserts.assert(game.getId() == request.getGame().getId());
     const player = this._gamesData.getPlayerList()[0];
     goog.asserts.assert(player.getFacebookId() ==
                         request.getPlayer().getFacebookId());
-    game.setSignedUpList(
-      game.getSignedUpList().filter(
-        p => p.getFacebookId() != player.getFacebookId())
-      .concat([game.getWaitingList()[0]]));
-    game.setWaitingList(game.getWaitingList().slice(1));
-    const fee = 9;
-    const returned = game.getPricePln() - fee;
-    player.getPayments().setBalancePln(
-      player.getPayments().getBalancePln() + returned);
-    player.getPayments().setTotalPaidPln(
-      player.getPayments().getTotalPaidPln() - returned);
-    player.getPayments().addOperation(proto.Operation.fromObject({
-      timestamp: {secondsSinceEpoch: 1543575600},  // 2018-11-30 12:00
-      type: proto.Operation.Type.RETURN,
-      amountPln: game.getPricePln(),
-      game: {id: game.getId()}
-    }));
-    player.getPayments().addOperation(proto.Operation.fromObject({
-      timestamp: {secondsSinceEpoch: 1543575600},  // 2018-11-30 12:00
-      type: proto.Operation.Type.CANCELATION_FEE,
-      amountPln: fee,
-      game: {id: game.getId()}
-    }));
-    this._gamesDataStream.put(this._gamesData);
-    return Promise.resolve(null);    
-  }
-
-  gameSetNotifyPlayerIfCanSignUp(request, metadata) {
-    const game = this._gamesData.getGameList()[2];
-    goog.asserts.assert(game.getId() == request.getGame().getId());
-    const player = this._gamesData.getPlayerList()[0];
-    goog.asserts.assert(player.getFacebookId() ==
-                        request.getPlayer().getFacebookId());
-    game.addToNotifyIfCanSignUp(request.getPlayer());
+    game.addToNotifyIfPlaceFree(request.getPlayer());
     this._gamesDataStream.put(this._gamesData);
     return Promise.resolve(null);    
   }

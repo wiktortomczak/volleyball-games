@@ -3,9 +3,8 @@
 
 import 'goog:goog.asserts';
 import 'goog:proto.Game.State';
-import 'goog:proto.GameCancelPlayerRequest';
-import 'goog:proto.GameSetNotifyPlayerIfCanSignUpRequest';
-import 'goog:proto.GameSignUpPlayerRequest';
+import 'goog:proto.GameSetNotifyPlayerIfPlaceFreeRequest';
+import 'goog:proto.GameSetPlayerSignedUpRequest';
 import 'goog:proto.GamesPromiseClient';
 import 'goog:proto.PlayerAddRequest';
 import 'goog:proto.PlayerUpdateRequest';
@@ -116,16 +115,16 @@ export default class Model extends Observable {
 export class Player {
 
   static create(proto, games, gamesClient) {
-    const operations = proto.getPayments().getOperationList().map(
-      operationProto => Operation.create(operationProto, games));
-    operations.sort((a, b) => (
+    const transactions = proto.getPayments().getTransactionList().map(
+      transactionProto => Transaction.create(transactionProto, games));
+    transactions.sort((a, b) => (
       a.getTimestamp().getTime() - b.getTimestamp().getTime()));
-    return new this(proto, operations, gamesClient);
+    return new this(proto, transactions, gamesClient);
   }
   
-  constructor(proto, operations, gamesClient) {
+  constructor(proto, transactions, gamesClient) {
     this._proto = proto;
-    this._operations = operations;
+    this._transactions = transactions;
     this._gamesClient = gamesClient;
   }
 
@@ -185,8 +184,8 @@ export class Player {
     return this._proto.getIban();
   }
 
-  get operations() {
-    return this._operations;
+  get transactions() {
+    return this._transactions;
   }
 
   update({email, notifyIfNewGame, iban}) {
@@ -205,7 +204,7 @@ export class Player {
   }
 }
 
-export class Operation {
+export class Transaction {
 
   static create(proto, games) {
     const game = proto.hasGame()
@@ -251,7 +250,7 @@ export class Game {
     // Set in _resolvePlayerRefs().
     this._signedUpPlayers = null;
     this._waitingPlayers = null;
-    this._playersToNotifyIfCanSignUp = null;
+    this._playersToNotifyIfPlaceFree = null;
     this._gamesClient = gamesClient;
   }
 
@@ -260,7 +259,7 @@ export class Game {
       players.get(playerRef.getFacebookId())));
     this._waitingPlayers = this._proto.getWaitingList().map(playerRef => (
       players.get(playerRef.getFacebookId())));
-    this._playersToNotifyIfCanSignUp = this._proto.getToNotifyIfCanSignUpList()
+    this._playersToNotifyIfPlaceFree = this._proto.getToNotifyIfPlaceFreeList()
       .map(playerRef => players.get(playerRef.getFacebookId()));
   }
 
@@ -304,7 +303,7 @@ export class Game {
     return this._proto.getMaxSignedUp();
   }
 
-  hasPlayer(player) {
+  isPlayerSignedUpOrWaiting(player) {
     return this._signedUpPlayers.includes(player)
       || this._waitingPlayers.includes(player);
   }
@@ -325,8 +324,8 @@ export class Game {
     return this.signedUpPlayers.length >= this.maxSignedUp;
   }
 
-  getNotifyIfCanSignUp(player) {
-    return this._playersToNotifyIfCanSignUp.includes(player);
+  getNotifyIfPlaceFree(player) {
+    return this._playersToNotifyIfPlaceFree.includes(player);
   }
   
   getCancelationFee() {
@@ -357,25 +356,18 @@ export class Game {
       a.getStartTime().getTime() - b.getStartTime().getTime()));
   }
 
-  signUpPlayer(player) {
-    return this._gamesClient.gameSignUpPlayer(
-      proto.GameSignUpPlayerRequest.fromObject({
+  setPlayerSignedUp(player, isSignedUp) {
+    return this._gamesClient.gameSetPlayerSignedUp(
+      proto.GameSetPlayerSignedUpRequest.fromObject({
         game: {id: this.id},
-        player: {facebookId: player.facebookId}
-      }));
-  }
-
-  cancelPlayer(player) {
-    return this._gamesClient.gameCancelPlayer(
-      proto.GameCancelPlayerRequest.fromObject({
-        game: {id: this.id},
-        player: {facebookId: player.facebookId}
+        player: {facebookId: player.facebookId},
+        isSignedUp: isSignedUp
       }));
   }
   
-  setNotifyIfCanSignUp(player, shouldNotify) {
-    return this._gamesClient.gameSetNotifyPlayerIfCanSignUp(
-      proto.GameSetNotifyPlayerIfCanSignUpRequest.fromObject({
+  setNotifyIfPlaceFree(player, shouldNotify) {
+    return this._gamesClient.gameSetNotifyPlayerIfPlaceFree(
+      proto.GameSetNotifyPlayerIfPlaceFreeRequest.fromObject({
         game: {id: this.id},
         player: {facebookId: player.facebookId},
         shouldNotify: shouldNotify

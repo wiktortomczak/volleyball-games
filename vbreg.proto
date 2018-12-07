@@ -11,20 +11,18 @@ service Games {
   rpc PlayerUpdate(PlayerUpdateRequest) returns (EmptyMessage) {}
   // TODO: PlayerRemove
   // TODO: PlayerWithdrawMoney
-  // TODO: PlayerPaymentOperationAdd.
-  // TODO: PlayerPaymentOperationRemove.
-  // TODO: PlayerPaymentOperationUpdate.
+  // TODO: PlayerPaymentTransactionAdd.
+  // TODO: PlayerPaymentTransactionRemove.
+  // TODO: PlayerPaymentTransactionUpdate.
   // TODO: Remove PlayerDeposit.
   rpc PlayerDeposit(PlayerDepositRequest)
     returns (EmptyMessage) {}  // TODO: role=admin.
   rpc GameAdd(GameAddRequest) returns (EmptyMessage) {}  // TODO: role=admin.
   rpc GameUpdate(GameUpdateRequest)
     returns (EmptyMessage) {}  // TODO: role=admin.
-  rpc GameSignUpPlayer(GameSignUpPlayerRequest)
+  rpc GameSetPlayerSignedUp(GameSetPlayerSignedUpRequest)
     returns (EmptyMessage) {}
-  rpc GameCancelPlayer(GameCancelPlayerRequest)
-    returns (EmptyMessage) {}
-  rpc GameSetNotifyPlayerIfCanSignUp(GameSetNotifyPlayerIfCanSignUpRequest)
+  rpc GameSetNotifyPlayerIfPlaceFree(GameSetNotifyPlayerIfPlaceFreeRequest)
     returns (EmptyMessage) {}
   rpc GameSettle(GameSettleRequest)
     returns (EmptyMessage) {}  // TODO: role=admin.
@@ -69,18 +67,14 @@ message GameUpdateRequest {
   optional double price_pln = 4;
 }
 
-message GameSignUpPlayerRequest {
+message GameSetPlayerSignedUpRequest {
   optional GameRef game = 1;
   optional PlayerRef player = 2;  // role=admin if other player.
+  optional bool is_signed_up = 3;
+  optional bool waive_cancelation_fee = 4;  // role=admin.
 }
 
-message GameCancelPlayerRequest {
-  optional GameRef game = 1;
-  optional PlayerRef player = 2;  // role=admin if other player.
-  optional bool suppress_cancelation_fee = 3;  // role=admin.
-}
-
-message GameSetNotifyPlayerIfCanSignUpRequest {
+message GameSetNotifyPlayerIfPlaceFreeRequest {
   optional GameRef game = 1;
   optional PlayerRef player = 2;
   optional bool should_notify = 3;
@@ -127,7 +121,7 @@ message Game {
   optional int64 max_signed_up = 8;
   repeated PlayerRef signed_up = 9;
   repeated PlayerRef waiting = 10;
-  repeated PlayerRef to_notify_if_can_sign_up = 11;
+  repeated PlayerRef to_notify_if_place_free = 11;
   optional double players_paid_pln = 12;
 }
 
@@ -148,10 +142,10 @@ message Payments {
   optional double total_blocked_pln = 5;
   // sum(withdrawal)
   optional double total_withdrawn_pln = 6;
-  repeated Operation operation = 7;
+  repeated Transaction transaction = 7;
 }
 
-message Operation {
+message Transaction {
   enum Type {
     DEPOSIT = 1;
     PAYMENT = 2;

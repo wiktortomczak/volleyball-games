@@ -1,6 +1,6 @@
 /* global proto */
 
-import 'goog:proto.Operation.Type';
+import 'goog:proto.Transaction.Type';
 
 import PropTypes from 'prop-types';
 import React from 'react';
@@ -85,14 +85,14 @@ export default class ProfileSection extends React.Component {
             </tr>
           </thead>
           <tbody>
-            {user.operations.slice(0).reverse().map(operation => {
-              const details = (operation.details instanceof Game)
-                ? operation.details.getShortDescription() : operation.details;
+            {user.transactions.slice(0).reverse().map(transaction => {
+              const details = (transaction.details instanceof Game)
+                ? transaction.details.getShortDescription() : transaction.details;
               return (
                 <tr>
-                  <td>{dateTimeFormat.format(operation.getTimestamp())}</td>
-                  <td>{OperationType.getName(operation.type)}</td>
-                  <td>{PLN.format(operation.amountPln)}</td>
+                  <td>{dateTimeFormat.format(transaction.getTimestamp())}</td>
+                  <td>{TransactionType.getName(transaction.type)}</td>
+                  <td>{PLN.format(transaction.amountPln)}</td>
                   <td>{details}</td>
                 </tr>
               );
@@ -127,4 +127,4 @@ ProfileSection.contextTypes = {
 };
 
 
-const OperationType = new ProtoEnum(proto.Operation.Type);
+const TransactionType = new ProtoEnum(proto.Transaction.Type);

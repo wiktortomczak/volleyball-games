@@ -91,7 +91,7 @@ export default class GamesSection extends React.Component {
   _renderGameActions(game) {
     let actions;
     const user = this._getUser();
-    if (!game.hasPlayer(user)) {
+    if (!game.isPlayerSignedUpOrWaiting(user)) {
       // TODO: Remove code duplication. Abstract modal code.
       const stateKey = `signup-${game.id}`;
       actions = [
@@ -101,7 +101,7 @@ export default class GamesSection extends React.Component {
           <SignUpConfirmation game={game} onClose={() => this.setState({[stateKey]: false})} />
       ];
       if (game.hasMaxSignedUpPlayers) {
-        actions.push(this._renderNotifyIfCanSignUp(game, user));
+        actions.push(this._renderNotifyIfPlaceFree(game, user));
       }
     } else {
       // TODO: Remove code duplication. Abstract modal code.
@@ -116,9 +116,9 @@ export default class GamesSection extends React.Component {
     return actions;
   }
 
-  _renderNotifyIfCanSignUp(game, user) {
+  _renderNotifyIfPlaceFree(game, user) {
     const id = `notify_if_free-${game.id}`;
-    let shouldNotify = game.getNotifyIfCanSignUp(user);
+    let shouldNotify = game.getNotifyIfPlaceFree(user);
     return (
       <p>
         <input id={id} type="checkbox" checked={shouldNotify} onChange={() => {
@@ -127,7 +127,7 @@ export default class GamesSection extends React.Component {
             window.alert('Set your email address first');
             this.props.history.push('/profile');
           } else {
-            game.setNotifyIfCanSignUp(user, shouldNotify);
+            game.setNotifyIfPlaceFree(user, shouldNotify);
           }
         }} />
         <label htmlFor={id}>
@@ -265,7 +265,8 @@ class SignUpConfirmation extends React.Component {
   }
 
   _handleSignUp() {
-    this._game.signUpPlayer(this._getUser()).then(this._onClose);
+    this._game.setPlayerSignedUp(this._getUser(), true /* isSignedUp */)
+    .then(this._onClose);
   }
 }
 
@@ -324,7 +325,8 @@ class CancelConfirmation extends React.Component {
   }
 
   _handleCancel() {
-    this._game.cancelPlayer(this._getUser()).then(this._onClose);
+    this._game.setPlayerSignedUp(this._getUser(), false /* isSignedUp */)
+    .then(this._onClose);
   }
 }
 
