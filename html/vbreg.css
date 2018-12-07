@@ -1,0 +1,181 @@
+@import url('https://fonts.googleapis.com/css?family=Noto+Serif+SC|Source+Sans+Pro');
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Source Sans Pro', sans-serif;
+}
+
+nav {
+    float: left;
+    padding: 10px 5px 0 10px;
+    width: 100px;
+    background-color: #eeeeee;
+}
+
+nav a {
+    display: block;
+    margin-bottom: 0.5em;
+}
+
+nav a.active {
+    pointer-events: none;
+    cursor: default;
+    text-decoration: none;
+    color: black;
+    font-weight: bold;
+}
+
+main {
+    float: left;
+    width: calc(100% - 115px);  /* TODO */
+}
+
+header {
+    padding: 10px 10px 5px 5px;
+    background-color: #eeeeee;
+}
+
+header h2 {
+    margin: 0;
+}
+
+header div {
+    margin-left: 10px;
+    float: right;
+}
+
+section {
+    padding-left: 20px;
+    padding-bottom: 10px;
+}
+
+section#login, section#status {
+    padding-top: 20px;
+}
+
+footer {
+    clear: both;
+    padding: 5px 10px 5px 10px;
+    background-color: #eeeeee;
+}
+
+footer span {
+    margin-left: 1em;
+}
+
+footer img {
+    position: relative;
+    top: 2px;
+}
+
+footer #version {
+    float: right;
+    font-size: smaller;
+}
+
+table {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+td, th {
+    border: 1px solid black;
+    padding: 5px 5px;
+    font-family: 'Source Sans Pro', sans-serif;
+}
+
+td.number {
+    text-align: right;
+}
+
+table.light {
+    border-collapse: collapse;
+    border-style: hidden;
+}
+
+input[type="text"], input[type="email"] {
+    background-color: #dddddd;
+}
+
+input[type="text"]:focus, input[type="email"]:focus {
+    background-color: #ffffff;
+}
+
+input[type="button"] + input[type="button"] {
+    margin-left: 10px;
+}
+
+dialog {
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+}
+
+span.important {
+    font-weight: bold;
+}
+
+span.definition {
+    font-weight: bold;
+}
+
+.smaller {
+    font-size: smaller;
+}
+
+section#intro, section#instructions {
+    max-width: 40em;
+    font-family: 'Noto Serif SC', serif;
+}
+
+section#instructions #transactions th {
+    text-align: left;
+    width: 10em;
+}
+
+section#instructions #transactions td {
+    font-family: 'Noto Serif SC', serif;
+}
+
+section#games td.players, section#games th.players {
+    max-width: 220px;
+}
+
+section#games td.actions, section#games th.actions {
+    max-width: 8em;
+}
+
+section#games td.players {
+    vertical-align: top;
+}
+
+section#games td.players span {
+    display: block;
+    font-size: smaller;
+}
+
+section#games td.players img {
+    margin-top: 5px;
+    margin-right: 5px;
+}
+
+section#games td.players .waiting_list {
+    margin-top: 5px;
+}
+
+section#games td.players .waiting_list img {
+    opacity: 0.3;
+}
+
+.positive_balance {
+    color: green;
+}
+
+.negative_balance {
+    color: darkred;
+}
+
+.sans_serif {
+    font-family: 'Source Sans Pro', sans-serif;
+}

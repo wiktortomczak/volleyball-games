@@ -1,0 +1,174 @@
+
+syntax = "proto2";
+
+import "base/timestamp.proto";
+import "base/proto/empty_message.proto";
+
+service Games {
+  rpc StreamData(StreamDataRequest) returns (stream GamesData) {}
+
+  rpc PlayerAdd(PlayerAddRequest) returns (EmptyMessage) {}
+  rpc PlayerUpdate(PlayerUpdateRequest) returns (EmptyMessage) {}
+  // TODO: PlayerRemove
+  // TODO: PlayerWithdrawMoney
+  // TODO: PlayerPaymentOperationAdd.
+  // TODO: PlayerPaymentOperationRemove.
+  // TODO: PlayerPaymentOperationUpdate.
+  // TODO: Remove PlayerDeposit.
+  rpc PlayerDeposit(PlayerDepositRequest)
+    returns (EmptyMessage) {}  // TODO: role=admin.
+  rpc GameAdd(GameAddRequest) returns (EmptyMessage) {}  // TODO: role=admin.
+  rpc GameUpdate(GameUpdateRequest)
+    returns (EmptyMessage) {}  // TODO: role=admin.
+  rpc GameSignUpPlayer(GameSignUpPlayerRequest)
+    returns (EmptyMessage) {}
+  rpc GameCancelPlayer(GameCancelPlayerRequest)
+    returns (EmptyMessage) {}
+  rpc GameSetNotifyPlayerIfCanSignUp(GameSetNotifyPlayerIfCanSignUpRequest)
+    returns (EmptyMessage) {}
+  rpc GameSettle(GameSettleRequest)
+    returns (EmptyMessage) {}  // TODO: role=admin.
+  rpc GameCancel(GameCancelRequest)
+    returns (EmptyMessage) {}  // TODO: role=admin.
+  // TODO: GameRemove  role=admin.
+}
+
+message StreamDataRequest {
+  optional string facebook_id = 1;
+}
+
+message PlayerAddRequest {
+  optional string facebook_id = 1;
+  optional string name = 2;
+}
+
+message PlayerUpdateRequest {
+  optional PlayerRef player = 1;
+  optional string email = 2;
+  optional bool notify_if_new_game = 3;
+  optional string iban = 4;
+}
+
+message PlayerDepositRequest {
+  optional PlayerRef player = 1;
+  optional double amount_pln = 2;
+  optional string source = 3;
+}
+
+message GameAddRequest {
+  optional string id = 1;
+  optional string facebook_event_url = 2;
+  optional int64 max_signed_up = 3;
+  optional double price_pln = 4;
+}
+
+message GameUpdateRequest {
+  optional GameRef game = 1;
+  optional string facebook_event_url = 2;
+  optional int64 max_signed_up = 3;
+  optional double price_pln = 4;
+}
+
+message GameSignUpPlayerRequest {
+  optional GameRef game = 1;
+  optional PlayerRef player = 2;  // role=admin if other player.
+}
+
+message GameCancelPlayerRequest {
+  optional GameRef game = 1;
+  optional PlayerRef player = 2;  // role=admin if other player.
+  optional bool suppress_cancelation_fee = 3;  // role=admin.
+}
+
+message GameSetNotifyPlayerIfCanSignUpRequest {
+  optional GameRef game = 1;
+  optional PlayerRef player = 2;
+  optional bool should_notify = 3;
+}
+
+message GameSettleRequest {}  // TODO
+message GameCancelRequest {}  // TODO
+
+
+message GamesData {
+  repeated Player player = 1;
+  repeated Game game = 2;
+}
+
+message Player {
+  optional string facebook_id = 1;  // Primary key.
+  optional string name = 2;
+  optional string email = 3;
+  optional bool notify_if_new_game = 4;
+  optional Timestamp last_login = 5;
+  optional Payments payments = 6;
+  optional string bank_transfer_id = 7;
+  optional string iban = 8;
+}
+
+message PlayerRef {
+  optional string facebook_id = 1;
+}
+
+message Game {
+  optional string id = 1;  // Primary key.
+  optional Timestamp start_time = 2;
+  optional Timestamp end_time = 3;
+  optional string location = 4;
+  optional string facebook_event_url = 5;
+  optional double price_pln = 6;
+  enum State {
+    UPCOMING = 1;
+    ENDED = 2;
+    SETTLED = 3;
+    CANCELED = 4;
+  }
+  optional State state = 7;
+  optional int64 max_signed_up = 8;
+  repeated PlayerRef signed_up = 9;
+  repeated PlayerRef waiting = 10;
+  repeated PlayerRef to_notify_if_can_sign_up = 11;
+  optional double players_paid_pln = 12;
+}
+
+message GameRef {
+  optional string id = 1;
+}
+
+message Payments {
+  // total_deposited - total_paid - total_withdrawn
+  optional double balance_pln = 1;
+  // balance - total_blocked
+  optional double free_balance_pln = 2;
+  // sum(deposit)
+  optional double total_deposited_pln = 3;
+  // sum(payment) + sum(cancelation_fee)
+  optional double total_paid_pln = 4;
+  // sum(block)
+  optional double total_blocked_pln = 5;
+  // sum(withdrawal)
+  optional double total_withdrawn_pln = 6;
+  repeated Operation operation = 7;
+}
+
+message Operation {
+  enum Type {
+    DEPOSIT = 1;
+    PAYMENT = 2;
+    BLOCK = 3;
+    RETURN = 4;
+    CANCELATION_FEE = 5;
+    WITHDRAWAL = 6;
+  }
+  optional Timestamp timestamp = 1;
+  optional Type type = 2;
+  optional double amount_pln = 3;
+  oneof details {
+    // PAYMENT, BLOCK, RETURN, CANCELATION_FEE.
+    GameRef game = 4;
+    // DEPOSIT: eg. wire id / title.
+    string deposit_source = 5;
+    // WITHDRAWAL.
+    string withdrawal_iban = 6;
+  }
+}

@@ -1,0 +1,1 @@
+../build/vbreg.bin.js
