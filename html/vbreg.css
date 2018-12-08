@@ -106,6 +106,10 @@ input[type="button"] + input[type="button"] {
     margin-left: 10px;
 }
 
+input {
+    font-family: 'Source Sans Pro', sans-serif;
+}
+
 dialog {
     border: 1px solid rgba(0, 0, 0, 0.3);
     border-radius: 6px;

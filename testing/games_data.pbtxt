@@ -1,0 +1,222 @@
+player {
+  facebook_id: '2413043365404025'
+  name: 'Wiktor Tomczak'
+  notify_if_new_game: true
+  payments {
+    balance_pln: 20
+    free_balance_pln: 20
+    total_deposited_pln: 20
+    total_paid_pln: 0
+    total_blocked_pln: 0
+    total_withdrawn_pln: 0
+  }
+  bank_transfer_id: 'WT1'
+}
+player {
+  facebook_id: '101'
+  name: 'Aaa Aaa'
+  payments {
+    balance_pln: 0
+    free_balance_pln: 0
+    total_deposited_pln: 0
+    total_paid_pln: 0
+    total_blocked_pln: 0
+    total_withdrawn_pln: 0
+  }
+  bank_transfer_id: ''
+}
+player {
+  facebook_id: '102'
+  name: 'Bbb Bbb'
+  payments {
+    balance_pln: 0
+    free_balance_pln: 0
+    total_deposited_pln: 0
+    total_paid_pln: 0
+    total_blocked_pln: 0
+    total_withdrawn_pln: 0
+  }
+  bank_transfer_id: ''
+}
+player {
+  facebook_id: '103'
+  name: 'Ccc Ccc'
+  payments {
+    balance_pln: 0
+    free_balance_pln: 0
+    total_deposited_pln: 0
+    total_paid_pln: 0
+    total_blocked_pln: 0
+    total_withdrawn_pln: 0
+  }
+  bank_transfer_id: ''
+}
+player {
+  facebook_id: '104'
+  name: 'Ddd Ddd'
+  payments {
+    balance_pln: 0
+    free_balance_pln: 0
+    total_deposited_pln: 0
+    total_paid_pln: 0
+    total_blocked_pln: 0
+    total_withdrawn_pln: 0
+  }
+  bank_transfer_id: ''
+}
+player {
+  facebook_id: '105'
+  name: 'Eee Eee'
+  payments {
+    balance_pln: 0
+    free_balance_pln: 0
+    total_deposited_pln: 0
+    total_paid_pln: 0
+    total_blocked_pln: 0
+    total_withdrawn_pln: 0
+  }
+  bank_transfer_id: ''
+}
+player {
+  facebook_id: '106'
+  name: 'Fff Fff'
+  payments {
+    balance_pln: 0
+    free_balance_pln: 0
+    total_deposited_pln: 0
+    total_paid_pln: 0
+    total_blocked_pln: 0
+    total_withdrawn_pln: 0
+  }
+  bank_transfer_id: ''
+}
+player {
+  facebook_id: '107'
+  name: 'Ggg Ggg'
+  payments {
+    balance_pln: 0
+    free_balance_pln: 0
+    total_deposited_pln: 0
+    total_paid_pln: 0
+    total_blocked_pln: 0
+    total_withdrawn_pln: 0
+  }
+  bank_transfer_id: ''
+}
+player {
+  facebook_id: '108'
+  name: 'Hhh Hhh'
+  payments {
+    balance_pln: 0
+    free_balance_pln: 0
+    total_deposited_pln: 0
+    total_paid_pln: 0
+    total_blocked_pln: 0
+    total_withdrawn_pln: 0
+  }
+  bank_transfer_id: ''
+}
+player {
+  facebook_id: '109'
+  name: 'Iii Iii'
+  payments {
+    balance_pln: 0
+    free_balance_pln: 0
+    total_deposited_pln: 0
+    total_paid_pln: 0
+    total_blocked_pln: 0
+    total_withdrawn_pln: 0
+  }
+  bank_transfer_id: ''
+}
+player {
+  facebook_id: '110'
+  name: 'Jjj Jjj'
+  payments {
+    balance_pln: 0
+    free_balance_pln: 0
+    total_deposited_pln: 0
+    total_paid_pln: 0
+    total_blocked_pln: 0
+    total_withdrawn_pln: 0
+  }
+  bank_transfer_id: ''
+}
+player {
+  facebook_id: '111'
+  name: 'Kkk Kkk'
+  payments {
+    balance_pln: 0
+    free_balance_pln: 0
+    total_deposited_pln: 0
+    total_paid_pln: 0
+    total_blocked_pln: 0
+    total_withdrawn_pln: 0
+  }
+  bank_transfer_id: ''
+}
+player {
+  facebook_id: '112'
+  name: 'Lll Lll'
+  payments {
+    balance_pln: 0
+    free_balance_pln: 0
+    total_deposited_pln: 0
+    total_paid_pln: 0
+    total_blocked_pln: 0
+    total_withdrawn_pln: 0
+  }
+  bank_transfer_id: ''
+}
+player {
+  facebook_id: '113'
+  name: 'Mmm Mmm'
+  payments {
+    balance_pln: 0
+    free_balance_pln: 0
+    total_deposited_pln: 0
+    total_paid_pln: 0
+    total_blocked_pln: 0
+    total_withdrawn_pln: 0
+  }
+  bank_transfer_id: ''
+}
+game {
+  id: '9'
+  start_time { seconds_since_epoch: 1543075200 }  # 2018-11-24 17:00
+  end_time { seconds_since_epoch: 1543082400 }    # 2018-11-24 19:00
+  location: 'Bobrowiecka 9'
+  price_pln: 18
+  state: UPCOMING
+  max_signed_up: 12
+  signed_up { facebook_id: '101' }
+  signed_up { facebook_id: '102' }
+  signed_up { facebook_id: '103' }
+  signed_up { facebook_id: '104' }
+  signed_up { facebook_id: '105' }
+  signed_up { facebook_id: '106' }
+  signed_up { facebook_id: '107' }
+  signed_up { facebook_id: '108' }
+  signed_up { facebook_id: '109' }
+  signed_up { facebook_id: '110' }
+  signed_up { facebook_id: '111' }
+  signed_up { facebook_id: '2413043365404025' }
+  waiting { facebook_id: '112' }
+  waiting { facebook_id: '113' }
+}
+game {
+  id: '10'
+  start_time { seconds_since_epoch: 1543680000 }  # 2018-12-01 17:00
+  end_time { seconds_since_epoch: 1543687200 }    # 2018-12-01 19:00
+  location: 'Bobrowiecka 9'
+  price_pln: 18
+  state: UPCOMING
+  max_signed_up: 12
+  signed_up { facebook_id: '101' }
+  signed_up { facebook_id: '102' }
+  signed_up { facebook_id: '103' }
+}
+player_acronyms_last_seq_num {
+  key: 'WT'
+  value: 1
+}

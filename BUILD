@@ -16,7 +16,11 @@ py_library(
   srcs = ["games.py"],
   deps = [
     ":vbreg_proto",
-    "//base/proto:empty_message_proto"
+    "//base:list_util",
+    "//base:time_util",
+    "//base/proto:empty_message_proto",
+    "//base/proto:persistent_proto",
+    "//base/proto/sync:observable",
   ]
 )
 

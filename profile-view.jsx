@@ -92,7 +92,7 @@ export default class ProfileSection extends React.Component {
                 <tr>
                   <td>{dateTimeFormat.format(transaction.getTimestamp())}</td>
                   <td>{TransactionType.getName(transaction.type)}</td>
-                  <td>{PLN.format(transaction.amountPln)}</td>
+                  <td class="number">{PLN.format(transaction.amountPln)}</td>
                   <td>{details}</td>
                 </tr>
               );
