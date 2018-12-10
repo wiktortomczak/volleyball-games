@@ -15,6 +15,7 @@ export default class MockGamesClient {
         {
           facebookId: '123',
           name: 'John Doe',
+          isAdmin: true,
           bankTransferId: 'JD1',
           payments: {
             balancePln: 32,
@@ -27,7 +28,7 @@ export default class MockGamesClient {
                 timestamp: {secondsSinceEpoch: 1542890700},  // 2018-11-22 13:45
                 type: proto.Transaction.Type.PAYMENT,
                 amountPln: 18,
-                game: {id: '9'}
+                game: {id: 9}
               },
               {
                 timestamp: {secondsSinceEpoch: 1542870600},  // 2018-11-22 08:10
@@ -106,7 +107,7 @@ export default class MockGamesClient {
       ],
       gameList: [
         {
-          id: '7',
+          id: 7,
           startTime: {secondsSinceEpoch: 1541865600},  // 2018-11-10 17:00
           endTime: {secondsSinceEpoch: 1541872800},    // 2018-11-10 19:00
           location: 'Bobrowiecka 9',
@@ -116,7 +117,7 @@ export default class MockGamesClient {
           maxSignedUp: 12
         },
         {
-          id: '8',
+          id: 8,
           startTime: {secondsSinceEpoch: 1542470400},  // 2018-11-17 17:00
           endTime: {secondsSinceEpoch: 1542477600},    // 2018-11-17 19:00
           location: 'Bobrowiecka 9',
@@ -126,7 +127,7 @@ export default class MockGamesClient {
           maxSignedUp: 12
         },
         {
-          id: '9',
+          id: 9,
           startTime: {secondsSinceEpoch: 1543075200},  // 2018-11-24 17:00
           endTime: {secondsSinceEpoch: 1543082400},    // 2018-11-24 19:00
           location: 'Bobrowiecka 9',
@@ -154,7 +155,7 @@ export default class MockGamesClient {
           ]
         },
         {
-          id: '10',
+          id: 10,
           startTime: {secondsSinceEpoch: 1543680000},  // 2018-12-01 17:00
           endTime: {secondsSinceEpoch: 1543687200},    // 2018-12-01 19:00
           location: 'Bobrowiecka 9',
@@ -185,7 +186,7 @@ export default class MockGamesClient {
   /**
    * @return {!Promise}
    */ 
-  playerAdd(request, metadata) {
+  playerAddOrTouch(request, metadata) {
     return Promise.resolve(null);
   }
 

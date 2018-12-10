@@ -43,6 +43,8 @@ transpile_jsx_to_js games-view.jsx build/games-view.js
 transpile_jsx_to_js profile-view.jsx build/profile-view.js
 # build/facebook-view.js
 transpile_jsx_to_js facebook-view.jsx build/facebook-view.js
+# build/game.js
+transpile_jsx_to_js game.jsx build/game.js
 # build/cancelation-fees.js
 transpile_jsx_to_js cancelation-fees.jsx build/cancelation-fees.js
 # build/testing/mock-auth-view.js
@@ -82,6 +84,7 @@ for vbreg in $@; do
     --js=build/instructions-view.js  \
     --js=build/profile-view.js  \
     --js=build/facebook-view.js  \
+    --js=build/game.js  \
     --js=build/cancelation-fees.js  \
     --js=build/base/timestamp_pb.js  \
     --js=build/base/proto/empty_message_pb.js  \

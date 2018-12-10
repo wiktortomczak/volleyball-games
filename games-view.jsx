@@ -1,12 +1,17 @@
+/* global goog */
 /* global proto */
 
+import 'goog:goog.array';
 import PropTypes from 'prop-types';
 import React from 'react';
 import {NavLink} from 'react-router-dom';
 
+import {Dates} from 'base/js/time';
 import CancelationFees from 'cancelation-fees';
+import {GameDescription} from 'game';
 import {dateFormat, hourMinuteFormat, PLNshort} from 'formatting';
-import Model from 'model';
+import Model, {Game, GameBuilder} from 'model';
+
 
 export default class GamesSection extends React.Component {
 
@@ -24,18 +29,31 @@ export default class GamesSection extends React.Component {
   }
 
   render() {
+    // TODO: This should be in getDerivedStateFromProps
+    // if it could read next context.
+    if (!this._model.isAdminMode && this.state.gameBuilder) {
+      this.setState({gameBuilder: null});
+    }
     return (
       <section id="games">
         <h3>Upcoming games</h3>
         {this._renderGamesTable(this._model.getUpcomingGames(), 'upcoming')}
         <h3>Past games</h3>
         {this._renderGamesTable(
-          this._model.getPastGames().slice(0).reverse(), 'past')}
+          this._model.getEndedGames().slice(0).reverse(), 'ended')}
       </section>
     );
   }
 
-  _renderGamesTable(games, upcomingOrPast) {
+  _renderGamesTable(games, upcomingOrEnded) {
+    if (this.state.gameBuilder) {
+      games = games.map(game => (
+        game.id == this.state.gameBuilder.id
+        ? this.state.gameBuilder : game));
+      if (upcomingOrEnded == 'upcoming' && this.state.gameBuilder.isNewGame) {
+        games.push(this.state.gameBuilder);
+      }
+    }
     return (
       <table>
         <thead>
@@ -45,75 +63,151 @@ export default class GamesSection extends React.Component {
             <th>Facebook event</th>
             <th>Price</th>
             <th className="players">Players</th>
-            {upcomingOrPast == 'upcoming' &&
+            {upcomingOrEnded == 'upcoming' &&
              <th className="actions">Actions</th>}
           </tr>
         </thead>
         <tbody>
-          {games.map(game => {
-            return (
-              <tr key={game.id}>
-                <td>
-                  {dateFormat.format(game.getStartTime())}<br/>
-                  {hourMinuteFormat.format(game.getStartTime())}{' - '}
-                  {hourMinuteFormat.format(game.getEndTime())}
-                </td>
-                <td>{game.location}</td>
-                <td>{game.hasFacebookEventUrl && 
-                     <a href={game.facebookEventUrl}>Facebook event</a>}</td>
-                <td>{PLNshort.format(game.pricePln)}</td>
-                <td className="players">
-                  <div className="playing">
-                    <span>
-                      playing{' '}
-                      ({game.signedUpPlayers.length} / {game.maxSignedUpPlayers})
-                    </span>
-                    {game.signedUpPlayers.map(player => (
-                       <Player player={player} key={player.facebookId} />))}
-                  </div>
-                  {game.hasMaxSignedUpPlayers &&
-                   <div className="waiting_list">
-                     <span>waiting list ({game.waitingPlayers.length})</span>
-                     {game.waitingPlayers.map(player => (
-                       <Player player={player} key={player.facebookId} />))}
-                   </div>}
-                </td>
-                {upcomingOrPast == 'upcoming' &&
-                 <td className="actions">{this._renderGameActions(game)}</td>}
-              </tr>
-            );
-          })}
+          {games.map(game => (
+            game instanceof Game ? this._renderGame(game, upcomingOrEnded) :
+            game instanceof GameBuilder ? this._renderGameBuilder(game) :
+            _throw(Error('Internal error'))))}
+          {upcomingOrEnded == 'upcoming' &&
+           this._model.isAdminMode && !this.state.gameBuilder &&
+           <tr>
+             <td colSpan="5" className="no_border" />
+             <td className="no_border">
+              <input type="button" value={'Add game'}
+                     onClick={() => this._handleAddUpcomingGame()}></input>
+             </td>
+           </tr>
+          }
         </tbody>
       </table>
     );
   }
 
+  _renderGame(game, upcomingOrEnded) {
+    return (
+      <tr key={game.id}>
+        <td>
+          {dateFormat.format(game.getStartTime())}<br/>
+          {hourMinuteFormat.format(game.getStartTime())}{' - '}
+          {hourMinuteFormat.format(game.getEndTime())}
+        </td>
+        <td>{game.location}</td>
+        <td>{game.hasFacebookEventUrl && 
+             <a href={game.facebookEventUrl}>Facebook event</a>}</td>
+        <td>{PLNshort.format(game.pricePln)}</td>
+        <td className="players">
+          <div className="playing">
+            <span>
+              playing{' '}
+              ({game.signedUpPlayers.length} / {game.maxSignedUpPlayers})
+            </span>
+            {game.signedUpPlayers.map(player => (
+               <Player player={player} key={player.facebookId} />))}
+          </div>
+          {game.hasMaxSignedUpPlayers &&
+           <div className="waiting_list">
+             <span>waiting list ({game.waitingPlayers.length})</span>
+             {game.waitingPlayers.map(player => (
+               <Player player={player} key={player.facebookId} />))}
+           </div>}
+        </td>
+        {upcomingOrEnded == 'upcoming' &&
+         <td className="actions">{this._renderGameActions(game)}</td>}
+      </tr>
+    );
+  }
+
+  _renderGameBuilder(gameBuilder) {
+    const lastGame = goog.array.last(this._model.getUpcomingGames()) || {
+      getStartTime: () => new Date(2000, 0, 0, 12),
+      getEndTime: () => new Date(2000, 0, 0, 14)
+    };
+    return (
+      <tr key={gameBuilder.id}>
+        <td>
+          <input type="text" className="date" defaultValue={gameBuilder.getDateStr()}
+                 placeholder={dateFormat.format(Dates.now())}
+                 onChange={e => gameBuilder.setDate(e.target.value)} 
+                 onBlur={e => {e.target.value = gameBuilder.getDateStr();}} /><br/>
+          <input type="text" className="time" defaultValue={gameBuilder.getStartTimeStr()}
+                 placeholder={hourMinuteFormat.format(lastGame.getStartTime())}
+                 onChange={e => gameBuilder.setStartTime(e.target.value)}
+                 onBlur={e => {e.target.value = gameBuilder.getStartTimeStr();}} />{' - '}
+          <input type="text" className="time" defaultValue={gameBuilder.getEndTimeStr()}
+                 placeholder={hourMinuteFormat.format(lastGame.getEndTime())}
+                 onChange={e => gameBuilder.setEndTime(e.target.value)}
+                 onBlur={e => {e.target.value = gameBuilder.getEndTimeStr();}} />
+        </td>
+        <td>
+          <input type="text" defaultValue={gameBuilder.location}
+                 onChange={e => gameBuilder.setLocation(e.target.value)} />
+        </td>
+        <td>
+          <input type="url" defaultValue={gameBuilder.facebookEventUrl}
+                 onChange={e => gameBuilder.setFacebookEventUrl(e.target.value)} />
+        </td>
+        <td>
+          <input type="number" defaultValue={gameBuilder.pricePln} size="1"
+                 onChange={e => gameBuilder.setPricePln(e.target.value)} /> PLN
+        </td>
+        <td className="players">
+          <div className="playing">
+            <span>
+              playing{' '}
+              ({(gameBuilder.signedUpPlayers || []).length} /{' '}
+               <input type="number" defaultValue={gameBuilder.maxSignedUpPlayers} size="1"
+                      onChange={e => gameBuilder.setMaxSignedUpPlayers(e.target.value)} />)
+            </span>
+          </div>
+        </td>
+        <td className="actions">
+          <input type="button" value="Save changes"
+                 onClick={() => gameBuilder.addOrUpdate().then(() => this.setState({gameBuilder: null}))} />
+          <input type="button" value="Discard changes"
+                 onClick={() => this.setState({gameBuilder: null})} />
+        </td>
+      </tr>
+    );
+  }
+
   _renderGameActions(game) {
-    let actions;
     const user = this._getUser();
-    if (!game.isPlayerSignedUpOrWaiting(user)) {
-      // TODO: Remove code duplication. Abstract modal code.
-      const stateKey = `signup-${game.id}`;
-      actions = [
-        <input type="button" value={'Sign up'}
-               onClick={() => this.setState({[stateKey]: true})} />,
-        this.state[stateKey] &&
-          <SignUpConfirmation game={game} onClose={() => this.setState({[stateKey]: false})} />
-      ];
-      if (game.hasMaxSignedUpPlayers) {
-        actions.push(this._renderNotifyIfPlaceFree(game, user));
+    if (!this._model.isAdminMode) {
+      if (!game.isPlayerSignedUpOrWaiting(user)) {
+        // TODO: Remove code duplication. Abstract modal code.
+        const stateKey = `signup-${game.id}`;
+        const actions = [
+          <input type="button" value="Sign up"
+                 onClick={() => this.setState({[stateKey]: true})} />,
+          this.state[stateKey] &&
+            <SignUpConfirmation game={game} onClose={() => this.setState({[stateKey]: false})} />
+        ];
+        if (game.hasMaxSignedUpPlayers) {
+          actions.push(this._renderNotifyIfPlaceFree(game, user));
+        }
+        return actions;
+      } else {
+        // TODO: Remove code duplication. Abstract modal code.
+        const stateKey = `cancel-${game.id}`;
+        return [
+          <input type="button" value="Cancel"
+                 onClick={() => this.setState({[stateKey]: true})} />,
+          this.state[stateKey] &&
+            <CancelConfirmation game={game} onClose={() => this.setState({[stateKey]: false})} />
+        ];
       }
-    } else {
-      // TODO: Remove code duplication. Abstract modal code.
-      const stateKey = `cancel-${game.id}`;
-      actions = [
-        <input type="button" value={'Cancel'}
-               onClick={() => this.setState({[stateKey]: true})} />,
-        this.state[stateKey] &&
-          <CancelConfirmation game={game} onClose={() => this.setState({[stateKey]: false})} />
+    } else {  // isAdminMode
+      return [
+        <input type="button" value="Edit game"
+               onClick={() => this._editGame(game)} />,
+        <input type="button" value="Remove game"
+               onClick={() => game.cancel()} />
       ];
     }
-    return actions;
   }
 
   _renderNotifyIfPlaceFree(game, user) {
@@ -135,6 +229,14 @@ export default class GamesSection extends React.Component {
         </label>
       </p>
     );
+  }
+
+  _handleAddUpcomingGame() {
+    this.setState({gameBuilder: new GameBuilder(null, this._model)});
+  }
+
+  _editGame(game) {
+    this.setState({gameBuilder: new GameBuilder(game)});
   }
 }
 
@@ -195,7 +297,7 @@ class SignUpConfirmation extends React.Component {
       <dialog>
         <h3>Sign-up confirmation</h3>
         <p>
-          You are about to sign up for {this._game.getShortDescription()}.
+          You are about to sign up for <GameDescription game={this._game} type={'text'} />.
         </p>
         {!!missingBalancePln &&
          <div className="important">
@@ -251,7 +353,7 @@ class SignUpConfirmation extends React.Component {
            </ul>
          </p>
         } 
-        <input type="button" value={action} onClick={() => this._handleSignUp()}/>
+        <input type="button" value={action} onClick={() => this._handleSignUp()} />
         <input type="button" value="No" onClick={this._onClose} />
       </dialog>
     );
@@ -290,28 +392,37 @@ class CancelConfirmation extends React.Component {
   }
 
   render() {
-    const fee = this._game.getCancelationFee();
+    const isWaitingList = this._game.isPlayerWaiting(this._getUser());
+    const fee = !isWaitingList ?  this._game.getCancelationFee() : null;
     return (
       <dialog>
         <h3>Cancelation confirmation</h3>
         <p>
-          You are about to cancel your participation in{' '}
-          {this._game.getShortDescription()}.
+          {!isWaitingList
+           ? 'You are about to cancel your participation in'
+           : 'You are about to leave the waiting list for'}{' '}
+          <GameDescription game={this._game} type='text' />.
         </p>
-        <p>
-          Out of {PLNshort.format(this._game.pricePln)} you paid for the game:
-          <ul>
-            <li>{PLNshort.format(this._game.pricePln - fee)}{' '}
-                 will be returned your account.</li>
-            {!!fee &&
-             <li>{PLNshort.format(fee)} cancelation fee will not be returned.</li>}
-          </ul>
-        </p>
-        <p>
-          Reminder: The cancelation fee is:
-          <CancelationFees game={this._game} />
-        </p>
-        <input type="button" value="Cancel" onClick={() => this._handleCancel()}/>
+        {!isWaitingList
+         ? [
+          <p>
+            Out of {PLNshort.format(this._game.pricePln)} you paid for the game:
+            <ul>
+              <li>{PLNshort.format(this._game.pricePln - fee)}{' '}
+                   will be returned your account.</li>
+              {!!fee &&
+               <li>{PLNshort.format(fee)} cancelation fee will not be returned.</li>}
+            </ul>
+          </p>,
+          <p>
+            Reminder: The cancelation fee is:
+            <CancelationFees game={this._game} />
+          </p>
+        ] : <ul>
+              <li>{PLNshort.format(this._game.pricePln)} previously blocked in
+                  your account will be unblocked.</li>
+            </ul>}
+        <input type="button" value="Cancel" onClick={() => this._handleCancel()} />
         <input type="button" value="No" onClick={this._onClose} />
       </dialog>
     );
@@ -333,3 +444,7 @@ class CancelConfirmation extends React.Component {
 CancelConfirmation.contextTypes = {
   model: PropTypes.instanceOf(Model).isRequired
 };
+
+function _throw(e) {
+  throw e;
+}

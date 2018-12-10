@@ -34,7 +34,7 @@ class Games(vbreg_pb2_grpc.GamesServicer):
     for player_proto in games_data.player:
       self._AddPlayer(_Player(player_proto), link_to_games_data=False)
     for game_proto in games_data.game:
-      game = _Game.FromProto(game_proto, self._players)
+      game = _Game.FromObservableProto(game_proto, self._players)
       self._AddGame(game, link_to_games_data=False)
 
   def StreamData(self, request, context):
@@ -48,18 +48,19 @@ class Games(vbreg_pb2_grpc.GamesServicer):
     finally:
       print '### StreamData end'
 
-  def PlayerAdd(self, request, context):
-    print '### PlayerAdd %s' % request,
-    with self._games_data_lock:
-      player = self._players.get(request.facebook_id)
-      if not player:
-        self._AddPlayer(_Player.FromRequest(request, self))
-      elif request.error_if_exists:
-        raise Exception('%s already exists' % player)
+  def PlayerAddOrTouch(self, request, context):
+    print '### PlayerAddOrTouch\n', request
+    with self._games_data.HoldUpdates():
+      with self._games_data_lock:
+        player = self._players.get(request.facebook_id)
+        if not player:
+          self._AddPlayer(_Player.FromRequest(request, self))
+        else:
+          player.UpdateLastTouch()
     return empty_message_pb2.EmptyMessage()
 
   def PlayerUpdate(self, request, context):
-    print '### PlayerUpdate %s' % request,
+    print '### PlayerUpdate\n', request
     player = self._players[request.player.facebook_id]
     with self._games_data.HoldUpdates():
       with self._games_data_lock:
@@ -67,7 +68,7 @@ class Games(vbreg_pb2_grpc.GamesServicer):
     return empty_message_pb2.EmptyMessage()
 
   def GameSetPlayerSignedUp(self, request, context):
-    print '### GameSetPlayerSignedUp %s' % request,
+    print '### GameSetPlayerSignedUp\n', request
     player = self._players[request.player.facebook_id]
     game = self._games[request.game.id]
     with self._games_data.HoldUpdates():
@@ -76,12 +77,35 @@ class Games(vbreg_pb2_grpc.GamesServicer):
     return empty_message_pb2.EmptyMessage()
 
   def GameSetNotifyPlayerIfPlaceFree(self, request, context):
-    print '### GameSetNotifyPlayerIfPlaceFree %s' % request,
+    print '### GameSetNotifyPlayerIfPlaceFree\n', request
     player = self._players[request.player.facebook_id]
     game = self._games[request.game.id]
     with self._games_data.HoldUpdates():
       with self._games_data_lock:
         game.SetNotifyPlayerIfPlaceFree(player, request.should_notify)
+    return empty_message_pb2.EmptyMessage()
+
+  def GameAdd(self, request, context):
+    print '### GameAdd\n', request
+    with self._games_data.HoldUpdates():
+      with self._games_data_lock:
+        self._AddGame(_Game.FromRequest(request, self))
+    return empty_message_pb2.EmptyMessage()
+
+  def GameUpdate(self, request, context):
+    print '### GameUpdate\n', request
+    with self._games_data.HoldUpdates():
+      with self._games_data_lock:
+        game = self._games[request.game.id]
+        game.Update(request)        
+    return empty_message_pb2.EmptyMessage()
+
+  def GameCancel(self, request, context):
+    print '### GameCancel\n', request
+    with self._games_data.HoldUpdates():
+      with self._games_data_lock:
+        game = self._games[request.game.id]
+        game.Cancel()        
     return empty_message_pb2.EmptyMessage()
 
   def _AddPlayer(self, player, link_to_games_data=True):
@@ -103,7 +127,8 @@ class _Player(object):
       facebook_id=request.facebook_id,
       name=request.name,
       notify_if_new_game=True,
-      bank_transfer_id=cls._GenerateBankTransferId(request.name, games))
+      bank_transfer_id=cls._GenerateBankTransferId(request.name, games),
+      last_touch=time_util.DateTimeToTimestampProto(time_util.now()))
     proto.payments.balance_pln = 0
     proto.payments.free_balance_pln = 0
     proto.payments.total_deposited_pln = 0
@@ -143,12 +168,17 @@ class _Player(object):
 
     if request.HasField('notify_if_new_game'):
       self._proto.notify_if_new_game = request.notify_if_new_game
+    elif request.email:
+      self._proto.notify_if_new_game = True
 
     if request.HasField('iban'):
       if request.iban:
         self._proto.iban = request.iban
       else:
         self._proto.ClearField('iban')
+
+  def UpdateLastTouch(self):
+    time_util.DateTimeToTimestampProto(time_util.now(), self._proto.last_touch)
 
   def Pay(self, amount_pln, game):
     self._proto.payments.balance_pln -= amount_pln
@@ -197,7 +227,6 @@ class _Player(object):
       acronyms = ''
     player_acronyms_last_seq_num = (
       games._games_data.player_acronyms_last_seq_num)
-    print acronyms
     if acronyms not in player_acronyms_last_seq_num:
       player_acronyms_last_seq_num[acronyms] = 0
     player_acronyms_last_seq_num[acronyms] += 1
@@ -211,7 +240,7 @@ def _IsAsciiLetter(c):
 class _Game(object):
 
   @classmethod
-  def FromProto(cls, proto, players):
+  def FromObservableProto(cls, proto, players):
     signed_up_players = [players[pr.facebook_id] for pr in proto.signed_up]
     waiting_players = [players[pr.facebook_id] for pr in proto.waiting]
     players_to_notify_if_place_free = [
@@ -219,8 +248,39 @@ class _Game(object):
     return cls(proto, signed_up_players, waiting_players,
                players_to_notify_if_place_free)
 
+  @classmethod
+  def FromRequest(cls, request, games):
+    if (not request.HasField('start_time')
+        or not request.HasField('end_time')
+        or not request.HasField('location')
+        or not request.HasField('price_pln')
+        or not request.HasField('max_signed_up')):
+      raise Exception('All of start time, end time, location, price, '
+                      'number of signed up places are required')
+    start_time = time_util.DateTimeFromTimestampProto(request.start_time)
+    end_time = time_util.DateTimeFromTimestampProto(request.end_time)
+    if start_time < time_util.now():
+      raise Exception('Start time must be in the future')
+    if end_time <= start_time:
+      raise Exception('End time must be later than start time')
+    facebook_event_url = (request.facebook_event_url
+                          if request.HasField('facebook_event_url') else None)
+    proto = vbreg_pb2.Game(
+      id=cls._GenerateGameId(games),
+      start_time=request.start_time,
+      end_time=request.end_time,
+      location=request.location,
+      facebook_event_url=facebook_event_url,
+      price_pln=request.price_pln,
+      state=vbreg_pb2.Game.UPCOMING,
+      max_signed_up=request.max_signed_up)
+    return cls(observable.Create(proto, with_delta=False), [], [], [])
+
   def __init__(self, proto, signed_up_players, waiting_players,
                players_to_notify_if_place_free):
+    assert proto.HasField('start_time')
+    assert proto.HasField('end_time')
+    assert proto.HasField('location')
     assert proto.HasField('price_pln')
     assert proto.HasField('state')
     assert proto.HasField('max_signed_up')
@@ -228,6 +288,9 @@ class _Game(object):
     self._signed_up_players = signed_up_players
     self._waiting_players = waiting_players
     self._players_to_notify_if_place_free = players_to_notify_if_place_free
+
+  def __str__(self):
+    return 'game id=%d' % self.id
 
   @property
   def proto(self):
@@ -252,6 +315,10 @@ class _Game(object):
   def max_signed_up(self):
     return self._proto.max_signed_up
 
+  @property
+  def has_free_place(self):
+    return len(self._signed_up_players) < self._proto.max_signed_up
+
   def GetCancelationFee(self):
     num_days_before_game = int(
       max((self.GetStartTime() - time_util.now()).total_seconds(), 0) /
@@ -271,6 +338,59 @@ class _Game(object):
     _CancelationFee(3, 7, 1./6),
     _CancelationFee(1, 3, 0.5),
     _CancelationFee(0, 1, 1)]
+
+  def Update(self, request):
+    is_start_time_changed = request.HasField('start_time') and (
+      self._proto.start_time != request.start_time)
+    is_end_time_changed = request.HasField('end_time') and (
+      self._proto.end_time != request.end_time)
+    is_location_changed = request.HasField('location') and (
+      self._proto.location != request.location)
+    is_price_pln_changed = request.HasField('price_pln') and (
+      self._proto.price_pln != request.price_pln)
+
+    if self._signed_up_players:
+      if (is_start_time_changed or is_end_time_changed
+          or is_location_changed or is_price_pln_changed):
+        raise Exception(
+          'Can not change any of start time, end time, location, price '
+          'because there are signed-up players')
+      if request.HasField('max_signed_up') and (
+          request.max_signed_up < len(self._signed_up_players)):
+        raise Exception(
+          'Can not reduce the number of signed up places '
+          'because there are players signed up for these places')
+    
+    if is_start_time_changed:
+      self._proto.start_time.MergeFrom(request.start_time)
+    if is_end_time_changed:
+      self._proto.end_time.MergeFrom(request.end_time)
+    if is_location_changed:
+      self._proto.location = request.location
+    if request.HasField('facebook_event_url'):
+      if request.facebook_event_url:
+        self._proto.facebook_event_url = request.facebook_event_url
+      else:
+        self._proto.ClearField('facebook_event_url')
+    if is_price_pln_changed:
+      self._proto.price_pln = request.price_pln
+    if request.HasField('max_signed_up'):
+      self._proto.max_signed_up = request.max_signed_up
+      while self._waiting_players and self.has_free_place:
+        self._SignUpNextWaitingPlayer()
+
+  def Cancel(self):
+    for player in self._signed_up_players:
+      player.Return(self.price_pln, self)
+    del self._signed_up_players[:]
+    del self._proto.signed_up[:]
+
+    for waiting_player in self._waiting_players:
+      waiting_player.Unblock(self.price_pln, self)
+    del self._waiting_players[:]
+    del self._proto.waiting[:]
+
+    self._proto.state = vbreg_pb2.Game.CANCELED
 
   def SetPlayerSignedUp(self, player, is_signed_up):
     assert self.is_upcoming
@@ -295,19 +415,22 @@ class _Game(object):
         self._PlayerRefListPop(self._proto.signed_up, player)
         player.Return(self.price_pln - self.GetCancelationFee(), self)
         if self._waiting_players:
-          waiting_player = self._waiting_players.pop(0)
-          waiting_player_ref = self._proto.waiting.pop(0)
-          self._signed_up_players.append(waiting_player)
-          self._proto.signed_up.add().MergeFrom(waiting_player_ref._message)
-          waiting_player.Unblock(self.price_pln, self)
-          waiting_player.Pay(self.price_pln, self)
-          # TODO: notify waiting_player
+          self._SignUpNextWaitingPlayer()
         else:
           pass  # TODO: notify to_notify_if_place_free if they are not signed up
       else:  # is_player_waiting
         self._waiting_players.remove(player)
         self._PlayerRefListPop(self._proto.waiting, player)
         player.Unblock(self.price_pln, self)
+
+  def _SignUpNextWaitingPlayer(self):
+    waiting_player = self._waiting_players.pop(0)
+    waiting_player_ref = self._proto.waiting.pop(0)
+    self._signed_up_players.append(waiting_player)
+    self._proto.signed_up.add().MergeFrom(waiting_player_ref._message)
+    waiting_player.Unblock(self.price_pln, self)
+    waiting_player.Pay(self.price_pln, self)
+    # TODO: notify waiting_player
 
   def SetNotifyPlayerIfPlaceFree(self, player, should_notify):
     if should_notify:
@@ -320,15 +443,16 @@ class _Game(object):
       self._PlayerRefListPop(self._proto.to_notify_if_place_free, player)
 
   @staticmethod
+  def _GenerateGameId(games):
+    game_id = games._games_data.last_game_id + 1
+    games._games_data.last_game_id = game_id
+    return game_id
+
+  @staticmethod
   def _PlayerRefListPop(player_ref_list, player):
     for i, player_ref in enumerate(player_ref_list):
       if player_ref.facebook_id == player.facebook_id:
-        try:
-          player_ref_list.pop(i)
-        except:
-          print '### i', i
-          print player_ref_list._container._values
-          raise
+        player_ref_list.pop(i)
         return
     raise ValueError('%s not found' % player)
 

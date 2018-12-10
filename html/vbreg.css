@@ -75,7 +75,6 @@ footer #version {
 }
 
 table {
-    border: 1px solid black;
     border-collapse: collapse;
 }
 
@@ -83,6 +82,10 @@ td, th {
     border: 1px solid black;
     padding: 5px 5px;
     font-family: 'Source Sans Pro', sans-serif;
+}
+
+td.no_border {
+    border: none;
 }
 
 td.number {
@@ -94,26 +97,26 @@ table.light {
     border-style: hidden;
 }
 
-input[type="text"], input[type="email"] {
-    background-color: #dddddd;
-}
-
-input[type="text"]:focus, input[type="email"]:focus {
-    background-color: #ffffff;
-}
-
-input[type="button"] + input[type="button"] {
-    margin-left: 10px;
-}
-
 input {
     font-family: 'Source Sans Pro', sans-serif;
+}
+
+input[type="button"] {
+    font-size: 13.33px
+}
+
+label {
+    font-size: 13.33px
 }
 
 dialog {
     border: 1px solid rgba(0, 0, 0, 0.3);
     border-radius: 6px;
     box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+}
+
+dialog input[type="button"] + input[type="button"] {
+    margin-left: 10px;
 }
 
 span.important {
@@ -170,6 +173,31 @@ section#games td.players .waiting_list {
 
 section#games td.players .waiting_list img {
     opacity: 0.3;
+}
+
+section#games td input[type="text"] {
+    width: 100%;
+}
+
+section#games td input.time {
+    width: 3em;
+}
+
+section#games td input[type="number"] {
+    width: 3em;
+}
+
+section#games td > input[type="button"] {
+    display: block;
+    margin-top: 5px;
+}
+
+section#profile input[type="text"], section#profile input[type="email"] {
+    background-color: #dddddd;
+}
+
+section#profile input[type="text"]:focus, section#profile input[type="email"]:focus {
+    background-color: #ffffff;
 }
 
 .positive_balance {

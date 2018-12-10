@@ -38,6 +38,7 @@ export default class View extends React.Component {
   }
 
   render() {
+    const user = this._model.hasGamesData ? this._model.getUser() : null;
     return (
       // TODO: Remove <div> from inside <BrowserRouter>.
       <BrowserRouter><div>
@@ -65,11 +66,19 @@ export default class View extends React.Component {
           <header>
             {/* TODO: Render the logout button only if logged in. */}
             {this._authButtonFactory.createLogoutButton(this._model.auth)}
+            {user && user.isAdmin &&
+             <div>
+               <input id="admin_mode" type="checkbox"
+                      value={this._model.isAdminMode}
+                      onChange={() => this._model.setIsAdminMode(!this._model.isAdminMode)} />
+               <label htmlFor="admin_mode">Admin mode</label>
+             </div>
+            }
             {this._model.auth.userCredentials &&
              <div><NavLink to="/profile">
                {this._model.auth.userCredentials.name}
              </NavLink></div>}
-            <h2>Volleyball game registration</h2>
+            <h2>Volleyball in Warsaw: game registration</h2>
           </header>
           {this._renderSection()}
         </main>

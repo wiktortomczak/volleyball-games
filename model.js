@@ -2,18 +2,21 @@
 /* global proto */
 
 import 'goog:goog.asserts';
+import 'goog:goog.Uri';
 import 'goog:proto.Game.State';
+import 'goog:proto.GameAddRequest';
+import 'goog:proto.GameCancelRequest';
+import 'goog:proto.GameUpdateRequest';
 import 'goog:proto.GameSetNotifyPlayerIfPlaceFreeRequest';
 import 'goog:proto.GameSetPlayerSignedUpRequest';
 import 'goog:proto.GamesPromiseClient';
-import 'goog:proto.PlayerAddRequest';
+import 'goog:proto.PlayerAddOrTouchRequest';
 import 'goog:proto.PlayerUpdateRequest';
 import 'goog:proto.StreamDataRequest';
 import Iterators from 'base/js/iterators';
 import Observable from 'base/js/observable';
-import {dateFromTimestamp} from 'base/js/time';
+import {Dates, dateFromTimestamp, dateToTimestamp} from 'base/js/time';
 import {FacebookAuth, FacebookUtil} from 'facebook';
-import {dateFormat} from 'formatting';
 
 
 export default class Model extends Observable {
@@ -33,6 +36,8 @@ export default class Model extends Observable {
     this._gamesClient = null;
     this._hasGamesData = false;
 
+    this._isAdminMode = false;
+
     this._setGamesClientFromUserCredentials(auth.userCredentials);
     auth.onChange(() => {
       this._setGamesClientFromUserCredentials(auth.userCredentials);
@@ -48,6 +53,10 @@ export default class Model extends Observable {
     return this._hasGamesData;
   }
 
+  get isAdminMode() {
+    return this._isAdminMode;
+  }
+
   getUser() {
     goog.asserts.assert(this._hasGamesData);
     return this._players.get(this._auth.userCredentials.facebookId);
@@ -58,11 +67,40 @@ export default class Model extends Observable {
       Iterators.filter(this._games.values(), game => game.isUpcoming)));
   }
 
-  getPastGames() {
+  getEndedGames() {
     return Game.sortByTimeAscending(Iterators.toArray(
-      Iterators.filter(this._games.values(), game => !game.isUpcoming)));
+      Iterators.filter(this._games.values(), game => game.isEnded)));
   }
 
+  setIsAdminMode(isAdminMode) {
+    this._isAdminMode = isAdminMode;
+    this._notifyChanged();
+  }
+
+  addGame(opt_startTime, opt_endTime, opt_location, opt_facebookEventUrl,
+         opt_pricePln, opt_maxSignedUpPlayers) {
+    const request = new proto.GameAddRequest;
+    if (opt_startTime) {
+      request.setStartTime(dateToTimestamp(opt_startTime));
+    }
+    if (opt_endTime) {
+      request.setEndTime(dateToTimestamp(opt_endTime));
+    }
+    if (goog.isDefAndNotNull(opt_location)) {
+      request.setLocation(opt_location);
+    }
+    if (goog.isDefAndNotNull(opt_facebookEventUrl)) {
+      request.setFacebookEventUrl(opt_facebookEventUrl);
+    }
+    if (goog.isDefAndNotNull(opt_pricePln)) {
+      request.setPricePln(opt_pricePln);
+    }
+    if (goog.isDefAndNotNull(opt_maxSignedUpPlayers)) {
+      request.setMaxSignedUp(opt_maxSignedUpPlayers);
+    }
+    return this._gamesClient.gameAdd(request);
+  }
+  
   _setGamesClientFromUserCredentials(userCredentials) {
     if (userCredentials) {
       this._connectToGamesService(userCredentials);
@@ -77,8 +115,8 @@ export default class Model extends Observable {
   _connectToGamesService(userCredentials) {
     this._gamesClient = this._createGamesClientFunc(userCredentials);
 
-    this._gamesClient.playerAdd(
-      proto.PlayerAddRequest.fromObject({
+    this._gamesClient.playerAddOrTouch(
+      proto.PlayerAddOrTouchRequest.fromObject({
         facebookId: userCredentials.facebookId,
         name: userCredentials.name}))
       .then(() => {
@@ -92,7 +130,7 @@ export default class Model extends Observable {
 
   static _createGamesClient(userCredentials) {
     // TODO: Use userCredentials.
-    return new proto.GamesPromiseClient('https://localhost:8080');
+    return new proto.GamesPromiseClient(_getLocationSchemeHostPort());
   }
 
   _updateFromGamesData(gamesData) {
@@ -146,6 +184,10 @@ export class Player {
 
   get hasEmail() {
     return this._proto.hasEmail();
+  }
+
+  get isAdmin() {
+    return this._proto.getIsAdmin();
   }
 
   get bankTransferId() {
@@ -247,6 +289,9 @@ export class Game {
 
   constructor(proto, gamesClient) {
     this._proto = proto;
+    goog.asserts.assert(
+      this._proto.getSignedUpList().length >= this.maxSignedUpPlayers
+      || !this._proto.getWaitingList().length);
     // Set in _resolvePlayerRefs().
     this._signedUpPlayers = null;
     this._waitingPlayers = null;
@@ -265,10 +310,6 @@ export class Game {
 
   get id() {
     return this._proto.getId();
-  }
-
-  getShortDescription() {
-    return 'the game on ' + dateFormat.format(this.getStartTime());
   }
 
   getStartTime() {
@@ -298,6 +339,14 @@ export class Game {
   get isUpcoming() {
     return this._proto.getState() == proto.Game.State.UPCOMING;
   }
+
+  get isEnded() {
+    return this._proto.getState() == proto.Game.State.ENDED;
+  }
+
+  get isCanceled() {
+    return this._proto.getState() == proto.Game.State.CANCELED;
+  } 
   
   get maxSignedUpPlayers() {
     return this._proto.getMaxSignedUp();
@@ -308,8 +357,8 @@ export class Game {
       || this._waitingPlayers.includes(player);
   }
 
-  get maxSignedUp() {
-    return this._proto.getMaxSignedUp();
+  isPlayerWaiting(player) {
+    return this._waitingPlayers.includes(player);
   }
 
   get signedUpPlayers() {
@@ -321,15 +370,16 @@ export class Game {
   }
 
   get hasMaxSignedUpPlayers() {
-    return this.signedUpPlayers.length >= this.maxSignedUp;
+    return this.signedUpPlayers.length >= this.maxSignedUpPlayers;
   }
 
   getNotifyIfPlaceFree(player) {
     return this._playersToNotifyIfPlaceFree.includes(player);
   }
-  
+
   getCancelationFee() {
-    const daysLeft = 1;  // TODO
+    const daysLeft = Math.max(Math.floor(
+      (this.getStartTime() - window.now()) / _NUM_MILLISECONDS_IN_DAY), 0);
     for (let [[lowerBound, upperBound], fee] of this.getCancelationFees()) {
       if (lowerBound <= daysLeft && (!upperBound || daysLeft < upperBound)) {
         return fee;
@@ -356,6 +406,37 @@ export class Game {
       a.getStartTime().getTime() - b.getStartTime().getTime()));
   }
 
+  update(opt_startTime, opt_endTime, opt_location, opt_facebookEventUrl,
+         opt_pricePln, opt_maxSignedUpPlayers) {
+    const request = proto.GameUpdateRequest.fromObject({game: {id: this.id}});
+    if (opt_startTime) {
+      request.setStartTime(dateToTimestamp(opt_startTime));
+    }
+    if (opt_endTime) {
+      request.setEndTime(dateToTimestamp(opt_endTime));
+    }
+    if (goog.isDefAndNotNull(opt_location)) {
+      request.setLocation(opt_location);
+    }
+    if (goog.isDefAndNotNull(opt_facebookEventUrl)) {
+      request.setFacebookEventUrl(opt_facebookEventUrl);
+    }
+    if (goog.isDefAndNotNull(opt_pricePln)) {
+      request.setPricePln(opt_pricePln);
+    }
+    if (goog.isDefAndNotNull(opt_maxSignedUpPlayers)) {
+      request.setMaxSignedUp(opt_maxSignedUpPlayers);
+    }
+    return this._gamesClient.gameUpdate(request);
+  }
+
+  cancel() {
+    return this._gamesClient.gameCancel(
+      proto.GameCancelRequest.fromObject({
+        game: {id: this.id}
+      }));
+  }
+
   setPlayerSignedUp(player, isSignedUp) {
     return this._gamesClient.gameSetPlayerSignedUp(
       proto.GameSetPlayerSignedUpRequest.fromObject({
@@ -374,3 +455,127 @@ export class Game {
       }));
   }
 }
+
+export class GameBuilder {
+
+  constructor(opt_game, opt_model) {
+    super();
+    goog.asserts.assert(!!opt_game != !!opt_model);
+    this._game = opt_game;
+    this._model = opt_model;
+    this._date = opt_game ? opt_game.getStartTime() : null;
+    this._startTime = opt_game ? opt_game.getStartTime() : null;
+    this._endTime = opt_game ? opt_game.getEndTime() : null;
+    this._location = opt_game ? opt_game.location : null;
+    this._facebookEventUrl = opt_game && opt_game.hasFacebookEventUrl
+      ? opt_game.facebookEventUrl : null;
+    this._pricePln = opt_game ? opt_game.pricePln : null;
+    this._signedUpPlayers = opt_game ? opt_game.signedUpPlayers : null;
+    this._maxSignedUpPlayers = opt_game ? opt_game.maxSignedUpPlayers : null;
+  }
+
+  get isNewGame() {
+    return !this._game;
+  }
+
+  get id() {
+    return this._game ? this._game.id : null;
+  }
+
+  getDateStr() {
+    return this._date ? Dates.format(this._date, 'DD.MM.YYYY') : null;
+  }
+
+  getStartTimeStr() {
+    return this._startTime ? Dates.format(this._startTime, 'HH:mm') : null;
+  }
+
+  getEndTimeStr() {
+    return this._endTime ? Dates.format(this._endTime, 'HH:mm') : null;
+  }
+
+  get location() {
+    return this._location;
+  }
+
+  get facebookEventUrl() {
+    return this._facebookEventUrl;
+  }
+
+  get pricePln() {
+    return this._pricePln;
+  }
+
+  get signedUpPlayers() {
+    return this._signedUpPlayers;
+  }
+
+  get maxSignedUpPlayers() {
+    return this._maxSignedUpPlayers;
+  }
+ 
+  setDate(dateStr) {
+    const date = Dates.fromString(dateStr, 'DD.MM.YYYY');
+    this._date = Dates.isValid(date) ? date : null;
+  }
+  
+  setStartTime(timeStr) {
+    const time = Dates.fromString(timeStr, 'HH:mm');
+    this._startTime = Dates.isValid(time) ? time : null;
+  }
+
+  setEndTime(timeStr) {
+    const time = Dates.fromString(timeStr, 'HH:mm');
+    this._endTime = Dates.isValid(time) ? time : null;
+  }
+
+  setLocation(location) {
+    this._location = location;
+  }
+
+  setFacebookEventUrl(url) {
+    this._facebookEventUrl = url;
+  }
+
+  setPricePln(pricePln) {
+    this._pricePln = pricePln;
+  }
+
+  setMaxSignedUpPlayers(maxSignedUpPlayers) {
+    this._maxSignedUpPlayers = maxSignedUpPlayers;
+  }
+
+  addOrUpdate() {
+    const addOrUpdateFunc = this._game
+      ? this._game.update.bind(this._game)
+      : this._model.addGame.bind(this._model);
+    return addOrUpdateFunc(
+      this._mergeDateTime(this._startTime),
+      this._mergeDateTime(this._endTime),
+      this._location,
+      this._facebookEventUrl,
+      this._pricePln,
+      this._maxSignedUpPlayers);
+  }
+
+  _mergeDateTime(time) {
+    return this._date & time
+      ? new Date(
+        this._date.getFullYear(),
+        this._date.getMonth(),
+        this._date.getDate(),
+        time.getHours(),
+        time.getMinutes())
+      : null;
+  }
+}
+
+function _getLocationSchemeHostPort() {
+  const uri = goog.Uri.parse(window.location.href);
+  return (
+    (uri.hasScheme() ? (uri.getScheme() + '://') : '')
+    + uri.getDomain()
+    + (uri.hasPort() ? ':' + uri.getPort() : ''));
+}
+
+const _NUM_MILLISECONDS_IN_DAY = 1000 * 60 * 60 * 24;

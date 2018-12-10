@@ -7,6 +7,7 @@ import React from 'react';
 
 import ProtoEnum from 'base/js/proto/enum';
 
+import {GameDescription} from 'game';
 import {dateTimeFormat, PLN} from 'formatting';
 import Model, {Game} from 'model';
 
@@ -19,12 +20,13 @@ export default class ProfileSection extends React.Component {
 
   render() {
     const user = this._getUser();
+    console.log(`render email=${user.email}`);
     return (
       <section id="profile">
         <h3>Profile</h3>
         <form onSubmit={e => this._handleEmail(e)}>
           <label htmlFor="email">E-mail</label>{' '}
-          <input type="email" id="email" defaultValue={user.email}
+          <input type="email" id="email" value={user.email} onChange={() => {}}
                  size="40"
                  onBlur={e => { e.target.value = user.email; }} />
         </form>
@@ -87,12 +89,13 @@ export default class ProfileSection extends React.Component {
           <tbody>
             {user.transactions.slice(0).reverse().map(transaction => {
               const details = (transaction.details instanceof Game)
-                ? transaction.details.getShortDescription() : transaction.details;
+                ? <GameDescription game={transaction.details} type={'item'} />
+                : transaction.details;
               return (
                 <tr>
                   <td>{dateTimeFormat.format(transaction.getTimestamp())}</td>
                   <td>{TransactionType.getName(transaction.type)}</td>
-                  <td class="number">{PLN.format(transaction.amountPln)}</td>
+                  <td className="number">{PLN.format(transaction.amountPln)}</td>
                   <td>{details}</td>
                 </tr>
               );
