@@ -1,0 +1,17 @@
+player {
+  facebook_id: '100003691337523'
+  name: 'Boris Anisimov'
+  is_admin: true
+  payments {
+    balance_pln: 0
+    free_balance_pln: 0
+    total_deposited_pln: 0
+    total_paid_pln: 0
+    total_blocked_pln: 0
+  }
+  bank_transfer_id: 'BA1'
+}
+player_acronyms_last_seq_num {
+  key: 'BA'
+  value: 1
+}

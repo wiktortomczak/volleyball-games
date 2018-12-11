@@ -3,7 +3,7 @@ import App from 'app';
 
 let app;
 
-window.fbAsyncInit = function() {
+window.onload = function() {
   FB.init({
     appId: '378751972670124',
     cookie: true,

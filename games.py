@@ -1,14 +1,16 @@
 
-import collections
+import Queue
 import threading
 
 import gflags
+
 from base import list_util
 from base import time_util
 from base.proto import empty_message_pb2
 from base.proto import persistent_proto
 from base.proto.sync import observable
 
+import config
 import vbreg_pb2
 import vbreg_pb2_grpc
 
@@ -23,6 +25,7 @@ class Games(vbreg_pb2_grpc.GamesServicer):
   def Create(cls):
     games_data = persistent_proto.PersistentProto.Open(
       vbreg_pb2.GamesData, FLAGS.games_data, create=True)
+    # print js_object_format.MessageToJsObject(games_data._message)
     return cls(games_data)
 
   def __init__(self, games_data):
@@ -39,12 +42,18 @@ class Games(vbreg_pb2_grpc.GamesServicer):
 
   def StreamData(self, request, context):
     print '### StreamData %s' % request,
+    queue = Queue.Queue()
+    context.add_callback(lambda: queue.put(None))
+    handle = self._games_data.ListenUpdates(
+      # TODO: Fix race condition. Put current games_data.
+      lambda *args: queue.put(True),
+      permanent=False, initial_set_update=True)
     try:
-      yield self._games_data._message
-      # TODO: Do not block.
-      for update in self._games_data.IterUpdates():
-        # TODO: Fix race condition.
-        yield self._games_data._message
+      while True:
+        if queue.get():
+          yield self._games_data._message
+        else:
+          break
     finally:
       print '### StreamData end'
 
@@ -65,6 +74,18 @@ class Games(vbreg_pb2_grpc.GamesServicer):
     with self._games_data.HoldUpdates():
       with self._games_data_lock:
         player.Update(request)
+    return empty_message_pb2.EmptyMessage()
+
+  def PlayerTransactionAdd(self, request, context):
+    print '### PlayerTransactionAdd\n', request
+    player = self._players[request.player.facebook_id]
+    if request.HasField('game'):
+      game = self._game[request.game.id]
+    else:
+      game = None
+    with self._games_data.HoldUpdates():
+      with self._games_data_lock:
+        player.AddTransaction(request, game)
     return empty_message_pb2.EmptyMessage()
 
   def GameSetPlayerSignedUp(self, request, context):
@@ -134,7 +155,6 @@ class _Player(object):
     proto.payments.total_deposited_pln = 0
     proto.payments.total_paid_pln = 0
     proto.payments.total_blocked_pln = 0
-    proto.payments.total_withdrawn_pln = 0
     return cls(observable.Create(proto, with_delta=False))
 
   def __init__(self, proto):
@@ -145,7 +165,6 @@ class _Player(object):
     assert proto.payments.HasField('total_deposited_pln')
     assert proto.payments.HasField('total_paid_pln')     
     assert proto.payments.HasField('total_blocked_pln')  
-    assert proto.payments.HasField('total_withdrawn_pln')
     self._proto = proto
 
   def __str__(self):
@@ -165,6 +184,7 @@ class _Player(object):
         self._proto.email = request.email
       else:
         self._proto.ClearField('email')
+        self._proto.notify_if_new_game = False
 
     if request.HasField('notify_if_new_game'):
       self._proto.notify_if_new_game = request.notify_if_new_game
@@ -179,6 +199,22 @@ class _Player(object):
 
   def UpdateLastTouch(self):
     time_util.DateTimeToTimestampProto(time_util.now(), self._proto.last_touch)
+
+  def AddTransaction(self, request, game):
+    if request.type == vbreg_pb2.Transaction.DEPOSIT:
+      return self.Deposit(request.amount_pln, request.deposit_source)
+    else:
+      raise NotImplementedError
+
+  def Deposit(self, amount_pln, deposit_source):
+    self._proto.payments.balance_pln += amount_pln
+    self._proto.payments.free_balance_pln += amount_pln
+    self._proto.payments.total_deposited_pln += amount_pln
+    self._proto.payments.transaction.add(
+      timestamp=time_util.DateTimeToTimestampProto(time_util.now()),
+      type=vbreg_pb2.Transaction.DEPOSIT,
+      amount_pln=amount_pln,
+      deposit_source=deposit_source)
 
   def Pay(self, amount_pln, game):
     self._proto.payments.balance_pln -= amount_pln
@@ -323,21 +359,12 @@ class _Game(object):
     num_days_before_game = int(
       max((self.GetStartTime() - time_util.now()).total_seconds(), 0) /
       _NUM_SECONDS_IN_DAY)
-    fee = list_util.GetOnlyOneByPredicate(
-      self._CANCELATION_FEES, lambda fee: (
-        fee.num_days_lower_bound <= num_days_before_game and
-        (fee.num_days_upper_bound is None or
-         num_days_before_game < fee.num_days_upper_bound)))
-    return fee.fraction_fee * self.price_pln
-
-  _CancelationFee = collections.namedtuple('_CancelationFee', [
-    'num_days_lower_bound', 'num_days_upper_bound', 'fraction_fee'])
-
-  _CANCELATION_FEES = [
-    _CancelationFee(7, None, 0),
-    _CancelationFee(3, 7, 1./6),
-    _CancelationFee(1, 3, 0.5),
-    _CancelationFee(0, 1, 1)]
+    rule = list_util.GetOnlyOneByPredicate(
+      config.config.cancelation_fee_rule, lambda rule: (
+        rule.min_days <= num_days_before_game and
+        (not rule.HasField('max_days') or
+         num_days_before_game < rule.max_days)))
+    return round(rule.fraction * self.price_pln)
 
   def Update(self, request):
     is_start_time_changed = request.HasField('start_time') and (

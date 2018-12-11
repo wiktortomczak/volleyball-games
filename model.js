@@ -1,21 +1,28 @@
 /* global goog */
 /* global proto */
 
+import 'goog:goog.array';
 import 'goog:goog.asserts';
 import 'goog:goog.Uri';
+import 'goog:proto.CancelationFee';
 import 'goog:proto.Game.State';
 import 'goog:proto.GameAddRequest';
 import 'goog:proto.GameCancelRequest';
-import 'goog:proto.GameUpdateRequest';
+import 'goog:proto.GameRef';
 import 'goog:proto.GameSetNotifyPlayerIfPlaceFreeRequest';
 import 'goog:proto.GameSetPlayerSignedUpRequest';
+import 'goog:proto.GameUpdateRequest';
 import 'goog:proto.GamesPromiseClient';
 import 'goog:proto.PlayerAddOrTouchRequest';
+import 'goog:proto.PlayerTransactionAddRequest';
 import 'goog:proto.PlayerUpdateRequest';
 import 'goog:proto.StreamDataRequest';
+import 'goog:proto.Transaction.Type';
 import Iterators from 'base/js/iterators';
 import Observable from 'base/js/observable';
 import {Dates, dateFromTimestamp, dateToTimestamp} from 'base/js/time';
+
+import config from 'config';
 import {FacebookAuth, FacebookUtil} from 'facebook';
 
 
@@ -62,11 +69,19 @@ export default class Model extends Observable {
     return this._players.get(this._auth.userCredentials.facebookId);
   }
 
+  get players() {
+    return this._players;
+  }
+
   getUpcomingGames() {
     return Game.sortByTimeAscending(Iterators.toArray(
       Iterators.filter(this._games.values(), game => game.isUpcoming)));
   }
 
+  getLastGame() {
+    return goog.array.last(this.getUpcomingGames());
+  }
+  
   getEndedGames() {
     return Game.sortByTimeAscending(Iterators.toArray(
       Iterators.filter(this._games.values(), game => game.isEnded)));
@@ -190,6 +205,11 @@ export class Player {
     return this._proto.getIsAdmin();
   }
 
+  getLastTouch() {
+    return this._proto.hasLastTouch()
+      ? dateFromTimestamp(this._proto.getLastTouch()) : null;
+  }
+
   get bankTransferId() {
     return this._proto.getBankTransferId();
   }
@@ -218,10 +238,6 @@ export class Player {
     return this._proto.getPayments().getTotalBlockedPln();
   }
 
-  get totalWithdrawnPln() {
-    return this._proto.getPayments().getTotalWithdrawnPln();
-  }
-
   get IBAN() {
     return this._proto.getIban();
   }
@@ -243,6 +259,26 @@ export class Player {
       request.setIban(iban);
     }
     return this._gamesClient.playerUpdate(request);
+  }
+
+  deposit(amountPln, source) {
+    return this.addTransaction(
+      proto.Transaction.Type.UPCOMING, amountPln, null, source);
+  }
+
+  addTransaction(type, amountPln, opt_game, opt_depositSource) {
+    goog.asserts.assert(!!opt_game != !!opt_depositSource);
+    const request = proto.PlayerTransactionAddRequest.fromObject({
+      player: {facebookId: this.facebookId},
+      type,
+      amountPln});
+    if (goog.isDefAndNotNull(opt_game)) {
+      request.setGame(proto.GameRef.fromObject({id: opt_game.id}));
+    }
+    if (goog.isDefAndNotNull(opt_depositSource)) {
+      request.setDepositSource(opt_depositSource);
+    }
+    return this._gamesClient.playerTransactionAdd(request);
   }
 }
 
@@ -336,6 +372,10 @@ export class Game {
     return this._proto.getPricePln();
   }
 
+  static get defaultPricePln() {
+    return 18;
+  }
+
   get isUpcoming() {
     return this._proto.getState() == proto.Game.State.UPCOMING;
   }
@@ -380,25 +420,25 @@ export class Game {
   getCancelationFee() {
     const daysLeft = Math.max(Math.floor(
       (this.getStartTime() - window.now()) / _NUM_MILLISECONDS_IN_DAY), 0);
-    for (let [[lowerBound, upperBound], fee] of this.getCancelationFees()) {
-      if (lowerBound <= daysLeft && (!upperBound || daysLeft < upperBound)) {
-        return fee;
+    for (let fee of this.getCancelationFees()) {
+      if (fee.getMinDays() <= daysLeft &&
+          (!fee.hasMaxDays() || daysLeft < fee.getMaxDays())) {
+        return fee.getFeePln();
       }
     }
   }
 
   getCancelationFees() {
-    return this.constructor.cancelationFees.map(
-      ([days, fraction]) => [days, this.pricePln * fraction]);
+    return this.constructor.cancelationFeeRules.map(rule => (
+      proto.CancelationFee.fromObject({
+        minDays: rule.getMinDays(),
+        maxDays: rule.hasMaxDays() ? rule.getMaxDays() : undefined,
+        feePln: Math.round(rule.getFraction() * this.pricePln)
+      })));
   }
 
-  static get cancelationFees() {
-    return [
-      [[7, null], 0],
-      [[3, 7], 1/6],
-      [[1, 3], 0.5],
-      [[0, 1], 1]
-    ];
+  static get cancelationFeeRules() {
+    return config.getCancelationFeeRuleList();
   }
 
   static sortByTimeAscending(games) {
@@ -459,7 +499,6 @@ export class Game {
 export class GameBuilder {
 
   constructor(opt_game, opt_model) {
-    super();
     goog.asserts.assert(!!opt_game != !!opt_model);
     this._game = opt_game;
     this._model = opt_model;

@@ -13,15 +13,20 @@ py_binary(
 
 py_library(
   name = "games",
-  srcs = ["games.py"],
+  srcs = [
+    "config.py",
+    "games.py",
+  ],
   deps = [
     ":vbreg_proto",
+    "//base:bazel_util",
     "//base:list_util",
     "//base:time_util",
     "//base/proto:empty_message_proto",
     "//base/proto:persistent_proto",
     "//base/proto/sync:observable",
-  ]
+  ],
+  data = [":vbreg.pbobj"]
 )
 
 py_proto_library(

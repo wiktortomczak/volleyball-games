@@ -1,0 +1,7 @@
+{
+  "cancelationFeeRuleList": [
+    {"minDays": 3, "fraction": 0}, 
+    {"minDays": 1, "maxDays": 3, "fraction": 0.16}, 
+    {"minDays": 0, "maxDays": 1, "fraction": 0.5}
+  ]
+}

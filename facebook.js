@@ -38,7 +38,8 @@ export class FacebookAuth extends Observable {
   }
 
   _setUserCredentialsFromFacebookResponse(response) {
-    console.log('response=' + JSON.stringify(response));
+    // TODO: debug log.
+    // console.log('response=' + JSON.stringify(response));
 
     if (response['status'] == 'connected') {
       FacebookCredentials.fromAuthResponse(response['authResponse']).then(

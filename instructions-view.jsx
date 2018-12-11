@@ -1,7 +1,8 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import {NavLink} from 'react-router-dom';
+import {Link} from 'react-router-dom';
+import {HashLink} from 'third_party/react-router-hash-link@1.2.1/index.js';
 
 import CancelationFees from 'cancelation-fees';
 import Model from 'model';
@@ -24,13 +25,13 @@ export default class InstructionsSection extends React.Component {
         <h4>Sign-up</h4>
         <p>
 In order to play in a game, you need to sign up for game first. You can sign up
-for any <NavLink to="/games">upcoming games</NavLink>. Click on the{' '}
+for any <Link to="/games">upcoming games</Link>. Click on the{' '}
 <input type="button" value="Sign up" readOnly /> button next to he game and confirm.
         </p>
         <p>
 Please keep in mind that this is binding: by signing up you declare to
 participate in the game and you pay. You can still{' '}
-<NavLink to="#cancelation">cancel</NavLink> if you need to.
+<HashLink to="#cancelation">cancel</HashLink> if you need to.
         </p>
 
         <h5>No free places</h5>
@@ -48,7 +49,7 @@ sign-up time.
             <p>
 This is binding. The moment you are automatically signed up, it is just like
 regular sign-up. You declare to participate in the game and you pay. You can
-still <NavLink to="#cancelation">cancel</NavLink> if you need to.
+still <HashLink to="#cancelation">cancel</HashLink> if you need to.
             </p>
             <p>
 While on the waiting list and not signed up for the game yet, you can cancel
@@ -68,11 +69,10 @@ is empty. Also, another notified player might sign up for the place before you.
           </li>
         </ol>
 
-        <a name="cancelation" />
-        <h4>Cancelation</h4>
+        <h4 id="cancelation">Cancelation</h4>
         <p>
 If you need to cancel, the amount you paid for the game is returned to your{' '}
-<NavLink to="#payments">account</NavLink>. However, a cancelation fee might
+<HashLink to="#payments">account</HashLink>. However, a cancelation fee might
 be deducted, depending on how many days before the game you cancel:
         </p>
         <p>
@@ -87,10 +87,10 @@ cancelation.
         
         <h4>New games</h4>
         <p>
-New games are added to <NavLink to="/games">upcoming games</NavLink> by Boris.
+New games are added to <Link to="/games">upcoming games</Link> by Boris.
 
 You can be notified by email. Check the appropriate checkbox in{' '}
-<NavLink to="/profile">your profile settings</NavLink>.
+<Link to="/profile">your profile settings</Link>.
         </p>
 
         <h4>Canceled games</h4>
@@ -98,19 +98,19 @@ You can be notified by email. Check the appropriate checkbox in{' '}
 TODO
         </p>
 
-        <h3>Payments</h3>
+        <h3 id="payments">Payments</h3>
         <p>
 Payments are integrated in your profile and are automated. Part of your profile
 is your dedicated payments account, that is, money that you deposit in the account
 and that is automatically managed to pay for your games.
         </p>
         <p>
-You need to periodically <NavLink to="#deposits">deposit money</NavLink> in your account.
+You need to periodically <HashLink to="#deposits">deposit money</HashLink> in your account.
 The rest is taken care of for you.
         </p>
         <p>
 You can find your current balance and a full record of transactions in your account
-in <NavLink to="/profile">your profile</NavLink>.
+in <Link to="/profile">your profile</Link>.
         </p>
 
         <h4>Transactions</h4>
@@ -121,7 +121,7 @@ A transaction can be any of the following:
           <tr>
             <th>DEPOSIT</th>
             <td>
-When you <NavLink to="#deposits">deposit money</NavLink>, the money is added to
+When you <HashLink to="#deposits">deposit money</HashLink>, the money is added to
 your account.
             </td>
           </tr>
@@ -141,7 +141,7 @@ When you cancel a game, the game's price is returned to your account.
           <tr>
             <th>CANCELATION FEE</th>
             <td>
-When you cancel a game, a <NavLink to="#cancelation">cancelation fee</NavLink>{' '}
+When you cancel a game, a <HashLink to="#cancelation">cancelation fee</HashLink>{' '}
 might be deducted.
             </td>
           </tr>
@@ -149,7 +149,7 @@ might be deducted.
             <th>WITHDRAWAL</th>
             <td>
 When you withdraw money, the money is removed from your account and sent back to
-a bank account that you specify in <NavLink to="/profile">your profile settings</NavLink>.
+a bank account that you specify in <Link to="/profile">your profile settings</Link>.
             </td>
           </tr>
           <tr>
@@ -169,8 +169,7 @@ account as well as any cancelation fee. This creates a debt (negative balance)
 in your account that you should cover as soon as possible, by depositing money.
         </p>
 
-        <a name="deposits" />
-        <h4>Deposits</h4>
+        <h4 id="deposits">Deposits</h4>
         <p>
           To deposit money in your account, make a bank transfer to:
           <ul>

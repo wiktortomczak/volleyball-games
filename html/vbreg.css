@@ -60,6 +60,16 @@ footer {
     background-color: #eeeeee;
 }
 
+header h2 {
+    display: inline;
+}
+
+header > a  {
+    position: relative;
+    top: 2px;
+    left: 10px;
+}
+
 footer span {
     margin-left: 1em;
 }
@@ -109,13 +119,17 @@ label {
     font-size: 13.33px
 }
 
+input[type="number"] {
+    width: 3em;
+}
+
 dialog {
     border: 1px solid rgba(0, 0, 0, 0.3);
     border-radius: 6px;
     box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
 }
 
-dialog input[type="button"] + input[type="button"] {
+input + input {
     margin-left: 10px;
 }
 
@@ -134,6 +148,16 @@ span.definition {
 section#intro, section#instructions {
     max-width: 40em;
     font-family: 'Noto Serif SC', serif;
+}
+
+section#intro a {
+    font-family: 'Source Sans Pro', sans-serif;
+}
+
+section#intro img {
+    position: relative;
+    top: 4px;
+    margin-right: 5px;
 }
 
 section#instructions #transactions th {
@@ -183,25 +207,35 @@ section#games td input.time {
     width: 3em;
 }
 
-section#games td input[type="number"] {
-    width: 3em;
-}
-
 section#games td > input[type="button"] {
     display: block;
     margin-top: 5px;
+    margin-left: 0;
 }
 
-section#profile input[type="text"], section#profile input[type="email"] {
+section#games .positive_balance {
+    color: green;
+}
+
+section#players .player img {
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+section#players .positive_balance {
+    color: black;
+}
+
+form.commitable_input {
+    display: inline-block;
+}
+
+form.commitable_input input {
     background-color: #dddddd;
 }
 
-section#profile input[type="text"]:focus, section#profile input[type="email"]:focus {
+form.commitable_input input:focus {
     background-color: #ffffff;
-}
-
-.positive_balance {
-    color: green;
 }
 
 .negative_balance {

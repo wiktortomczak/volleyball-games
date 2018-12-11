@@ -8,7 +8,6 @@ player {
     total_deposited_pln: 20
     total_paid_pln: 0
     total_blocked_pln: 0
-    total_withdrawn_pln: 0
   }
   bank_transfer_id: 'WT1'
 }
@@ -21,7 +20,6 @@ player {
     total_deposited_pln: 0
     total_paid_pln: 0
     total_blocked_pln: 0
-    total_withdrawn_pln: 0
   }
   bank_transfer_id: ''
 }
@@ -34,7 +32,6 @@ player {
     total_deposited_pln: 0
     total_paid_pln: 0
     total_blocked_pln: 0
-    total_withdrawn_pln: 0
   }
   bank_transfer_id: ''
 }
@@ -47,7 +44,6 @@ player {
     total_deposited_pln: 0
     total_paid_pln: 0
     total_blocked_pln: 0
-    total_withdrawn_pln: 0
   }
   bank_transfer_id: ''
 }
@@ -60,7 +56,6 @@ player {
     total_deposited_pln: 0
     total_paid_pln: 0
     total_blocked_pln: 0
-    total_withdrawn_pln: 0
   }
   bank_transfer_id: ''
 }
@@ -73,7 +68,6 @@ player {
     total_deposited_pln: 0
     total_paid_pln: 0
     total_blocked_pln: 0
-    total_withdrawn_pln: 0
   }
   bank_transfer_id: ''
 }
@@ -86,7 +80,6 @@ player {
     total_deposited_pln: 0
     total_paid_pln: 0
     total_blocked_pln: 0
-    total_withdrawn_pln: 0
   }
   bank_transfer_id: ''
 }
@@ -99,7 +92,6 @@ player {
     total_deposited_pln: 0
     total_paid_pln: 0
     total_blocked_pln: 0
-    total_withdrawn_pln: 0
   }
   bank_transfer_id: ''
 }
@@ -112,7 +104,6 @@ player {
     total_deposited_pln: 0
     total_paid_pln: 0
     total_blocked_pln: 0
-    total_withdrawn_pln: 0
   }
   bank_transfer_id: ''
 }
@@ -125,7 +116,6 @@ player {
     total_deposited_pln: 0
     total_paid_pln: 0
     total_blocked_pln: 0
-    total_withdrawn_pln: 0
   }
   bank_transfer_id: ''
 }
@@ -138,7 +128,6 @@ player {
     total_deposited_pln: 0
     total_paid_pln: 0
     total_blocked_pln: 0
-    total_withdrawn_pln: 0
   }
   bank_transfer_id: ''
 }
@@ -151,7 +140,6 @@ player {
     total_deposited_pln: 0
     total_paid_pln: 0
     total_blocked_pln: 0
-    total_withdrawn_pln: 0
   }
   bank_transfer_id: ''
 }
@@ -164,7 +152,6 @@ player {
     total_deposited_pln: 0
     total_paid_pln: 0
     total_blocked_pln: 0
-    total_withdrawn_pln: 0
   }
   bank_transfer_id: ''
 }
@@ -177,7 +164,6 @@ player {
     total_deposited_pln: 0
     total_paid_pln: 0
     total_blocked_pln: 0
-    total_withdrawn_pln: 0
   }
   bank_transfer_id: ''
 }

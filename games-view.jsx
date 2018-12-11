@@ -1,14 +1,15 @@
 /* global goog */
 /* global proto */
 
-import 'goog:goog.array';
 import PropTypes from 'prop-types';
 import React from 'react';
-import {NavLink} from 'react-router-dom';
+import {HashLink} from 'third_party/react-router-hash-link@1.2.1/index.js';
+import dialogPolyfill from 'dialog-polyfill'
 
 import {Dates} from 'base/js/time';
 import CancelationFees from 'cancelation-fees';
 import {GameDescription} from 'game';
+import {PlayerImage} from 'players-view';
 import {dateFormat, hourMinuteFormat, PLNshort} from 'formatting';
 import Model, {Game, GameBuilder} from 'model';
 
@@ -106,13 +107,13 @@ export default class GamesSection extends React.Component {
               ({game.signedUpPlayers.length} / {game.maxSignedUpPlayers})
             </span>
             {game.signedUpPlayers.map(player => (
-               <Player player={player} key={player.facebookId} />))}
+               <PlayerImage player={player} key={player.facebookId} />))}
           </div>
           {game.hasMaxSignedUpPlayers &&
            <div className="waiting_list">
              <span>waiting list ({game.waitingPlayers.length})</span>
              {game.waitingPlayers.map(player => (
-               <Player player={player} key={player.facebookId} />))}
+               <PlayerImage player={player} key={player.facebookId} />))}
            </div>}
         </td>
         {upcomingOrEnded == 'upcoming' &&
@@ -122,7 +123,7 @@ export default class GamesSection extends React.Component {
   }
 
   _renderGameBuilder(gameBuilder) {
-    const lastGame = goog.array.last(this._model.getUpcomingGames()) || {
+    const lastGame = this._model.getLastGame() || {
       getStartTime: () => new Date(2000, 0, 0, 12),
       getEndTime: () => new Date(2000, 0, 0, 14)
     };
@@ -151,7 +152,7 @@ export default class GamesSection extends React.Component {
                  onChange={e => gameBuilder.setFacebookEventUrl(e.target.value)} />
         </td>
         <td>
-          <input type="number" defaultValue={gameBuilder.pricePln} size="1"
+          <input type="number" defaultValue={gameBuilder.pricePln || Game.defaultPricePln}
                  onChange={e => gameBuilder.setPricePln(e.target.value)} /> PLN
         </td>
         <td className="players">
@@ -245,32 +246,6 @@ GamesSection.contextTypes = {
 };
 
 
-class Player extends React.Component {
-
-  get _player() {
-    return this.props.player;
-  }
-
-  render() {
-    let finalSrc = false;
-    return (
-        <img src="profile_blank-50x50.jpg" width="50" height="50"
-             alt={this._player.name} title={this._player.name}
-             onLoad={e => {
-               if (!finalSrc) {
-                 e.target.src = this._player.getProfilePictureUrl();
-                 finalSrc = true;
-               }
-             }}
-             onError={e => {
-               e.target.src = 'profile_blank-50x50.jpg';
-             }}
-        />
-    );
-  }
-}
-
-
 class SignUpConfirmation extends React.Component {
 
   get _game() {
@@ -335,7 +310,7 @@ class SignUpConfirmation extends React.Component {
              <li>You deposit the missing {PLNshort.format(missingBalancePln)}{' '}
                  in your account now.<br/>
                <span className="smaller">
-                 (<NavLink to="/instructions#deposits">instructions</NavLink>)
+                 (<HashLink to="/instructions#deposits">instructions</HashLink>)
                </span>
              </li>}
             <li>In case you need to cancel, a cancelation fee is deducted<br/>
@@ -361,6 +336,7 @@ class SignUpConfirmation extends React.Component {
   
   componentDidMount() {
     const dialog = document.getElementsByTagName('dialog')[0];  // TODO
+    dialogPolyfill.registerDialog(dialog);
     dialog.addEventListener('close', this._onClose);
     dialog.addEventListener('cancel', this._onClose);
     dialog.showModal();
@@ -430,6 +406,7 @@ class CancelConfirmation extends React.Component {
   
   componentDidMount() {
     const dialog = document.getElementsByTagName('dialog')[0];  // TODO
+    dialogPolyfill.registerDialog(dialog);
     dialog.addEventListener('close', this._onClose);
     dialog.addEventListener('cancel', this._onClose);
     dialog.showModal();

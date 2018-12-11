@@ -6,4 +6,6 @@ set -euo pipefail
 sed -e "s/localhost/$HOSTNAME/g" -i /nginx/nginx.conf
 /nginx/nginx -p /nginx -c /nginx/nginx.conf
 
-/games_main/games_main --games_data=/games_main/data/games_data.pbtxt
+/games_main/games_main  \
+  --games_data=/games_main/data/games_data.pbtxt  \
+  --num_grpc_threads=50

@@ -22,7 +22,6 @@ export default class MockGamesClient {
             freeBalancePln: 32,
             totalDepositedPln: 50,
             totalPaidPln: 18,
-            totalWithdrawnPln: 0,
             transactionList: [
               {
                 timestamp: {secondsSinceEpoch: 1542890700},  // 2018-11-22 13:45

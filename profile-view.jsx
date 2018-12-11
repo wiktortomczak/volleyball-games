@@ -7,6 +7,7 @@ import React from 'react';
 
 import ProtoEnum from 'base/js/proto/enum';
 
+import CommitableInput from 'commitable-input';
 import {GameDescription} from 'game';
 import {dateTimeFormat, PLN} from 'formatting';
 import Model, {Game} from 'model';
@@ -14,34 +15,33 @@ import Model, {Game} from 'model';
 
 export default class ProfileSection extends React.Component {
 
-  _getUser() {
-    return this.context.model.getUser();
+  _getPlayer(opt_props, opt_context) {
+    const props = opt_props || this.props;
+    const context = opt_context || this.context;
+    return props.player || context.model.getUser();
   }
 
   render() {
-    const user = this._getUser();
-    console.log(`render email=${user.email}`);
+    const player = this._getPlayer();
     return (
       <section id="profile">
-        <h3>Profile</h3>
-        <form onSubmit={e => this._handleEmail(e)}>
-          <label htmlFor="email">E-mail</label>{' '}
-          <input type="email" id="email" value={user.email} onChange={() => {}}
-                 size="40"
-                 onBlur={e => { e.target.value = user.email; }} />
-        </form>
+        <h3>{!!this.props.player && this.props.player.name + '\'s '}Profile</h3>
+        <CommitableInput
+           type="email" label="E-mail" size="40"
+           value={(props, context) => this._getPlayer(props, context).email}
+           onCommit={email => this._getPlayer().update({email})} />
         <p>
           <input id="notify_if_new_game" type="checkbox"
-                 disabled={!user.hasEmail} checked={user.notifyIfNewGame}
-                 onChange={() => user.update({notifyIfNewGame: !user.notifyIfNewGame})}
+                 disabled={!player.hasEmail} checked={player.notifyIfNewGame}
+                 onChange={() => player.update({notifyIfNewGame: !player.notifyIfNewGame})}
           />
           <label htmlFor="notify_if_new_game">
-            Email me when a new game is available
+            Email me when a new game is open for sign-up
           </label>
         </p>
         <p>
           <input id="notify_if_auto_sign_up" type="checkbox"
-                 disabled="disabled" checked={user.hasEmail} />
+                 disabled="disabled" checked={player.hasEmail} />
           <label htmlFor="notify_if_auto_sign_up">
             Email me when I am automatically signed up for a game
           </label>
@@ -50,31 +50,26 @@ export default class ProfileSection extends React.Component {
         <h3>Payments</h3>
         <ul>
           <li>Balance:{' '}
-            <span>{PLN.format(user.balancePln)}</span><br/>
-            (Free: <span>{PLN.format(user.freeBalancePln)}</span>)
+            <span>{PLN.format(player.balancePln)}</span><br/>
+            (Free: <span>{PLN.format(player.freeBalancePln)}</span>)
           </li>
           <li>Total deposited:{' '}
-            <span>{PLN.format(user.totalDepositedPln)}</span>
+            <span>{PLN.format(player.totalDepositedPln)}</span>
           </li>
           <li>Total paid:{' '}
-            <span>{PLN.format(user.totalPaidPln)}</span>
+            <span>{PLN.format(player.totalPaidPln)}</span>
           </li>
           <li>Total blocked:{' '}
-            <span>{PLN.format(user.totalBlockedPln)}</span>
-          </li>
-          <li>Total withdrawn:{' '}
-            <span>{PLN.format(user.totalWithdrawnPln)}</span>
+            <span>{PLN.format(player.totalBlockedPln)}</span>
           </li>
         </ul>
-        <form onSubmit={e => this._handleIBAN(e)}>
-          <input type="button" value="Withdraw money"
+        <input type="button" value="Withdraw money"
                onClick={this._handleWithdraw.bind(this)} />{' '}
-          <label htmlFor="iban">IBAN</label>{' '}
-          <input type="text" id="iban" defaultValue={user.IBAN}
-                 size="30" minLength="26" maxLength="26" pattern="[0-9]{26}"
-                 title="Provide 26-digit IBAN"
-                 onBlur={e => { e.target.value = user.IBAN; }} />
-        </form>
+        <CommitableInput
+          type="text" label="IBAN" title="Provide 26-digit IBAN"
+          size="30" minLength="26" maxLength="26" pattern="[0-9]{26}"
+          value={(props, context) => this._getPlayer(props, context).IBAN}
+          onCommit={iban => this._getPlayer().update({iban})} />
 
         <h4>Transaction history</h4>
         <table>
@@ -87,7 +82,7 @@ export default class ProfileSection extends React.Component {
             </tr>
           </thead>
           <tbody>
-            {user.transactions.slice(0).reverse().map(transaction => {
+            {player.transactions.slice(0).reverse().map(transaction => {
               const details = (transaction.details instanceof Game)
                 ? <GameDescription game={transaction.details} type={'item'} />
                 : transaction.details;
@@ -108,20 +103,6 @@ export default class ProfileSection extends React.Component {
 
   _handleWithdraw() {
     window.alert('Not implemented');
-  }
-
-  _handleEmail(event) {
-    const emailInput = document.getElementById('email');
-    const email = emailInput.value;
-    this._getUser().update({email}).then(() => emailInput.blur());
-    event.preventDefault();
-  }
-
-  _handleIBAN(event) {
-    const ibanInput = document.getElementById('iban');
-    const iban = ibanInput.value;
-    this._getUser().update({iban}).then(() => ibanInput.blur());
-    event.preventDefault();
   }
 }
 

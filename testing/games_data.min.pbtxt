@@ -1,0 +1,17 @@
+player {
+  facebook_id: '2413043365404025'
+  name: 'Wiktor Tomczak'
+  is_admin: true
+  payments {
+    balance_pln: 20
+    free_balance_pln: 20
+    total_deposited_pln: 20
+    total_paid_pln: 0
+    total_blocked_pln: 0
+  }
+  bank_transfer_id: 'WT1'
+}
+player_acronyms_last_seq_num {
+  key: 'WT'
+  value: 1
+}

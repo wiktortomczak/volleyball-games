@@ -6,6 +6,7 @@ mkdir -p build
 mkdir -p build/base
 mkdir -p build/base/proto
 mkdir -p build/testing
+mkdir -p build/third_party/react-router-hash-link@1.2.1
 
 ITRADER=$HOME/itrader
 CLOSURE_LIBRARY=$HOME/.cache/bazel/_bazel_wiktor/32acc0e70aa57664f5590efb17a0944e/external/closure_library
@@ -39,6 +40,8 @@ transpile_jsx_to_js intro-view.jsx build/intro-view.js
 transpile_jsx_to_js instructions-view.jsx build/instructions-view.js
 # build/games-view.js
 transpile_jsx_to_js games-view.jsx build/games-view.js
+# build/players-view.js
+transpile_jsx_to_js players-view.jsx build/players-view.js
 # build/profile-view.js
 transpile_jsx_to_js profile-view.jsx build/profile-view.js
 # build/facebook-view.js
@@ -47,8 +50,17 @@ transpile_jsx_to_js facebook-view.jsx build/facebook-view.js
 transpile_jsx_to_js game.jsx build/game.js
 # build/cancelation-fees.js
 transpile_jsx_to_js cancelation-fees.jsx build/cancelation-fees.js
+# build/commitable-input.js
+transpile_jsx_to_js commitable-input.jsx build/commitable-input.js
 # build/testing/mock-auth-view.js
 transpile_jsx_to_js testing/mock-auth-view.jsx build/testing/mock-auth-view.js
+
+transpile_jsx_to_js third_party/react-router-hash-link@1.2.1/index.js build/third_party/react-router-hash-link@1.2.1/index.js
+
+# build/config.js
+echo 'import "goog:proto.Configuration"; export default proto.Configuration.fromObject(' > build/config.js
+cat vbreg.pbobj >> build/config.js
+echo ')' >> build/config.js
 
 # build/vbreg.bin.js
 # build/vbreg-test.bin.js
@@ -76,18 +88,22 @@ for vbreg in $@; do
     --js=facebook.js  \
     --js=auth.js  \
     --js=formatting.js  \
+    --js=build/config.js  \
     --js=build/vbreg_pb.js  \
     --js=build/vbreg_grpc_web_pb.js  \
     --js=build/view.js  \
     --js=build/games-view.js  \
     --js=build/intro-view.js  \
     --js=build/instructions-view.js  \
+    --js=build/players-view.js  \
     --js=build/profile-view.js  \
     --js=build/facebook-view.js  \
     --js=build/game.js  \
     --js=build/cancelation-fees.js  \
+    --js=build/commitable-input.js  \
     --js=build/base/timestamp_pb.js  \
     --js=build/base/proto/empty_message_pb.js  \
+    --js=build/third_party/react-router-hash-link@1.2.1  \
     --js=testing/mock-auth.js  \
     --js=testing/mock-games-client.js  \
     --js=build/testing/mock-auth-view.js  \
@@ -110,5 +126,6 @@ for vbreg in $@; do
     --extern_module=npm:react-router-dom:$ITRADER/frontend/npm_packages/react-router-dom.externs.js  \
     --extern_module=npm:prop-types:$ITRADER/base/js/npm_packages/prop-types.externs.js  \
     --extern_module=npm:fb:fb.externs.js  \
+    --extern_module=npm:dialog-polyfill:dialog-polyfill.externs.js  \
     --extern_module=npm:moment:$ITRADER/base/js/npm_packages/moment.externs.js
 done

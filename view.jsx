@@ -8,6 +8,7 @@ import {BrowserRouter, NavLink, Redirect, Route, Switch} from 'react-router-dom'
 import GamesSection from 'games-view';
 import IntroSection from 'intro-view';
 import InstructionsSection from 'instructions-view';
+import PlayersSection from 'players-view';
 import ProfileSection from 'profile-view';
 import {FacebookAuthButtonFactory} from 'facebook-view';
 import Model from 'model';
@@ -79,6 +80,9 @@ export default class View extends React.Component {
                {this._model.auth.userCredentials.name}
              </NavLink></div>}
             <h2>Volleyball in Warsaw: game registration</h2>
+            <a href="https://facebook.com/groups/307483076649700/">
+              <img src="facebook-20x20.png" width="20" heigth="20" />
+            </a>
           </header>
           {this._renderSection()}
         </main>
@@ -90,7 +94,9 @@ Contact:
           </span>
           <span>
             <img src="coding-40x20.gif" width="40" height="20" />{' '}
-            website: Wiktor <a href="#">messenger</a> | <a href="#">email</a>
+            website: Wiktor{' '}
+            <a href="https://www.messenger.com/t/wiktor.tomczak.10">messenger</a>{' | '}
+            <a href={'mailto:wiktor.tomczak' + '@gmail.com'}>email</a>
           </span>
           <div id="version">v. 0.1</div>
         </footer>
@@ -117,6 +123,11 @@ Contact:
            <Route exact path='/games' component={GamesSection} />
            <Route exact path='/players' component={PlayersSection} />
            <Route exact path='/profile' component={ProfileSection} />
+           {this._model.isAdminMode  &&
+            <Route path='/profile/:id' render={({match}) => (
+              <ProfileSection player={this._model.players.get(match.params.id)} />
+             )} />
+           }
            <Route><Redirect to='/' /></Route>
          </Switch>
       );
@@ -127,5 +138,3 @@ Contact:
 View.childContextTypes = {
   model: PropTypes.instanceOf(Model).isRequired
 };
-
-function PlayersSection() { return ''; }
