@@ -7,10 +7,10 @@ import React from 'react';
 
 import ProtoEnum from 'base/js/proto/enum';
 
-import CommitableInput from 'commitable-input';
-import {GameDescription} from 'game';
-import {dateTimeFormat, PLN} from 'formatting';
-import Model, {Game} from 'model';
+import CommitableInput from 'fe/commitable-input';
+import {dateTimeFormat, PLN} from 'fe/formatting';
+import {GameDescription} from 'fe/game';
+import Model, {Game} from 'fe/model';
 
 
 export default class ProfileSection extends React.Component {
@@ -21,6 +21,10 @@ export default class ProfileSection extends React.Component {
     return props.player || context.model.getUser();
   }
 
+  get _model() {
+    return this.context.model;
+  }
+
   render() {
     const player = this._getPlayer();
     return (
@@ -29,7 +33,13 @@ export default class ProfileSection extends React.Component {
         <CommitableInput
            type="email" label="E-mail" size="40"
            value={(props, context) => this._getPlayer(props, context).email}
-           onCommit={email => this._getPlayer().update({email})} />
+           onCommit={email => {
+             if (email != this._getPlayer().email) {
+               this._getPlayer().update({email}).then(() => (
+                 this._model.addSuccess(
+                   'E-mail has been ' + (email ? 'set' : 'cleared'))));
+             }
+           }} />
         <p>
           <input id="notify_if_new_game" type="checkbox"
                  disabled={!player.hasEmail} checked={player.notifyIfNewGame}
@@ -69,7 +79,13 @@ export default class ProfileSection extends React.Component {
           type="text" label="IBAN" title="Provide 26-digit IBAN"
           size="30" minLength="26" maxLength="26" pattern="[0-9]{26}"
           value={(props, context) => this._getPlayer(props, context).IBAN}
-          onCommit={iban => this._getPlayer().update({iban})} />
+          onCommit={iban => {
+            if (iban != this._getPlayer().IBAN) {
+              this._getPlayer().update({iban}).then(() => (
+                this._model.addSuccess(
+                  'IBAN has been ' + (iban ? 'set' : 'cleared'))));
+            }
+          }} />
 
         <h4>Transaction history</h4>
         <table>

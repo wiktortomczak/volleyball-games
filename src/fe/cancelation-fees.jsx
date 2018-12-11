@@ -1,8 +1,8 @@
 
 import React from 'react';
 
-import {PLNshort, percentShort} from 'formatting';
-import {Game} from 'model';
+import {PLNshort, percentShort} from 'fe/formatting';
+import {Game} from 'fe/model';
 
 
 export default class CancelationFees extends React.Component {

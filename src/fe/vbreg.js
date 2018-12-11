@@ -1,5 +1,5 @@
 
-import App from 'app';
+import App from 'fe/app';
 
 let app;
 

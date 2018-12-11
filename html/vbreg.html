@@ -1,6 +1,20 @@
 <html>
   <head>
     <meta charset="utf-8" />
+    <meta name="author" content="Wiktor Tomczak" />
+    <meta name="description" content="Sign-up for Volleyball in Warsaw's games" />
+    <title>Volleyball in Warsaw</title>
+    <script>
+document.addEventListener('readystatechange', function(event) {
+  var loadingEl = document.createElement('p');
+  loadingEl.appendChild(document.createTextNode('Loading page...'));
+  if (event.target.readyState == 'interactive') {
+    document.body.appendChild(loadingEl);
+  } else if (event.target.readyState == 'complete') {
+    document.body.getElementsByTagName('p')[0].style.display = 'none';
+  }
+});
+    </script>
     <script crossorigin src="https://unpkg.com/react@16.5.2/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@16.5.2/umd/react-dom.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-router-dom@4.3.1/umd/react-router-dom.js"></script>

@@ -7,11 +7,12 @@ import {HashLink} from 'third_party/react-router-hash-link@1.2.1/index.js';
 import dialogPolyfill from 'dialog-polyfill'
 
 import {Dates} from 'base/js/time';
-import CancelationFees from 'cancelation-fees';
-import {GameDescription} from 'game';
-import {PlayerImage} from 'players-view';
-import {dateFormat, hourMinuteFormat, PLNshort} from 'formatting';
-import Model, {Game, GameBuilder} from 'model';
+
+import CancelationFees from 'fe/cancelation-fees';
+import {dateFormat, hourMinuteFormat, PLNshort} from 'fe/formatting';
+import {GameDescription} from 'fe/game';
+import Model, {Game, GameBuilder} from 'fe/model';
+import {PlayerImage} from 'fe/players-view';
 
 
 export default class GamesSection extends React.Component {
@@ -152,7 +153,7 @@ export default class GamesSection extends React.Component {
                  onChange={e => gameBuilder.setFacebookEventUrl(e.target.value)} />
         </td>
         <td>
-          <input type="number" defaultValue={gameBuilder.pricePln || Game.defaultPricePln}
+          <input type="number" defaultValue={gameBuilder.pricePln}
                  onChange={e => gameBuilder.setPricePln(e.target.value)} /> PLN
         </td>
         <td className="players">
@@ -160,14 +161,19 @@ export default class GamesSection extends React.Component {
             <span>
               playing{' '}
               ({(gameBuilder.signedUpPlayers || []).length} /{' '}
-               <input type="number" defaultValue={gameBuilder.maxSignedUpPlayers} size="1"
+               <input type="number" size="1"
+                      defaultValue={gameBuilder.maxSignedUpPlayers} 
                       onChange={e => gameBuilder.setMaxSignedUpPlayers(e.target.value)} />)
             </span>
           </div>
         </td>
         <td className="actions">
           <input type="button" value="Save changes"
-                 onClick={() => gameBuilder.addOrUpdate().then(() => this.setState({gameBuilder: null}))} />
+                 onClick={() => gameBuilder.addOrUpdate().then(() => {
+                   this.setState({gameBuilder: null});
+                   const action = gameBuilder.isNewGame ? 'created' : 'updated';
+                   this._model.addSuccess(`You have ${action} the game`);
+                 })} />
           <input type="button" value="Discard changes"
                  onClick={() => this.setState({gameBuilder: null})} />
         </td>
@@ -206,7 +212,8 @@ export default class GamesSection extends React.Component {
         <input type="button" value="Edit game"
                onClick={() => this._editGame(game)} />,
         <input type="button" value="Remove game"
-               onClick={() => game.cancel()} />
+               onClick={() => game.cancel().then(() => (
+                 this._model.addSuccess('You have removed the game'))) } />
       ];
     }
   }
@@ -254,6 +261,10 @@ class SignUpConfirmation extends React.Component {
 
   get _onClose() {
     return this.props.onClose;
+  }
+
+  get _model() {
+    return this.context.model;
   }
 
   _getUser() {
@@ -344,7 +355,10 @@ class SignUpConfirmation extends React.Component {
 
   _handleSignUp() {
     this._game.setPlayerSignedUp(this._getUser(), true /* isSignedUp */)
-    .then(this._onClose);
+      .then(() => {
+        this._onClose();
+        this._model.addSuccess('You have signed up for the game');
+      });
   }
 }
 
@@ -365,6 +379,10 @@ class CancelConfirmation extends React.Component {
 
   _getUser() {
     return this.context.model.getUser();
+  }
+
+  get _model() {
+    return this.context.model;
   }
 
   render() {
@@ -414,7 +432,10 @@ class CancelConfirmation extends React.Component {
 
   _handleCancel() {
     this._game.setPlayerSignedUp(this._getUser(), false /* isSignedUp */)
-    .then(this._onClose);
+      .then(() => {
+        this._onClose();
+        this._model.addSuccess('You have canceled your participation in the game');
+      });
   }
 }
 

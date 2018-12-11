@@ -2,7 +2,8 @@
 
 import threading
 from base import grpc_util
-import games
+
+from src.be import games
 
 
 def main():

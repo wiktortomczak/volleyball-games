@@ -1,6 +1,6 @@
 
-import Model from 'model';
-import View from 'view';
+import Model from 'fe/model';
+import View from 'fe/view';
 
 
 export default class App {

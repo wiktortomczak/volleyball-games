@@ -4,8 +4,8 @@ import React from 'react';
 import {Link} from 'react-router-dom';
 import {HashLink} from 'third_party/react-router-hash-link@1.2.1/index.js';
 
-import CancelationFees from 'cancelation-fees';
-import Model from 'model';
+import CancelationFees from 'fe/cancelation-fees';
+import Model from 'fe/model';
 
 
 export default class InstructionsSection extends React.Component {
@@ -17,7 +17,7 @@ export default class InstructionsSection extends React.Component {
   render() {
     const user = this._getUser();
     return (
-      <section id="instructions">        
+      <section id="instructions" className="text">
         <h2>Instructions</h2>
 
         <h3>Games</h3>
@@ -26,7 +26,7 @@ export default class InstructionsSection extends React.Component {
         <p>
 In order to play in a game, you need to sign up for game first. You can sign up
 for any <Link to="/games">upcoming games</Link>. Click on the{' '}
-<input type="button" value="Sign up" readOnly /> button next to he game and confirm.
+<input type="button" value="Sign up" readOnly /> button next to the game and confirm.
         </p>
         <p>
 Please keep in mind that this is binding: by signing up you declare to
@@ -126,7 +126,7 @@ your account.
             </td>
           </tr>
           <tr>
-            <th>PAYMENT</th>
+            <th>PAY</th>
             <td>
 When you sign up for a game, you pay. The game's price (participation cost) is taken
 from your account.
@@ -136,27 +136,27 @@ from your account.
             <th>RETURN</th>
             <td>
 When you cancel a game, the game's price is returned to your account.
+A <HashLink to="#cancelation">cancelation fee</HashLink>{' '} might be deducted.
             </td>
           </tr>
           <tr>
-            <th>CANCELATION FEE</th>
-            <td>
-When you cancel a game, a <HashLink to="#cancelation">cancelation fee</HashLink>{' '}
-might be deducted.
-            </td>
-          </tr>
-          <tr>
-            <th>WITHDRAWAL</th>
-            <td>
-When you withdraw money, the money is removed from your account and sent back to
-a bank account that you specify in <Link to="/profile">your profile settings</Link>.
-            </td>
-          </tr>
-          <tr>
-            <th>BLOCKADE</th>
+            <th>BLOCK</th>
             <td>
 When you sign up for a game's waiting list, the game's price is blocked in your
 account, to cover the eventual <span className="definition">PAYMENT</span>.
+            </td>
+          </tr>
+          <tr>
+            <th>UNBLOCK</th>
+            <td>
+              TODO
+            </td>
+          </tr>
+          <tr>
+            <th>WITHDRAW</th>
+            <td>
+When you withdraw money, the money is removed from your account and sent back to
+a bank account that you specify in <Link to="/profile">your profile settings</Link>.
             </td>
           </tr>
         </table>
@@ -193,6 +193,13 @@ The transferred amount is added to your account:
         </p>
 
         <h4>Withdrawals</h4>
+        <p>
+You can withdraw some or all money from your account to your bank account at
+any time. In <Link to="/profile">your profile</Link>, click on the{' '}
+<input type="button" value="Withdraw money" readOnly /> button. You need to
+specify your bank account number (IBAN) first. The money is sent via a bank
+transfer.
+        </p>
       </section>
     );
   }

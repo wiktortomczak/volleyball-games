@@ -7,7 +7,7 @@ export default class IntroSection extends React.Component {
 
   render() {
     return (
-      <section id="intro">
+      <section id="intro" className="text">
         <p>
           Welcome!
         </p>

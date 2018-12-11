@@ -4,7 +4,7 @@ import 'goog:goog.object';
 import PropTypes from 'prop-types';
 import React from 'react';
 
-import Model from 'model';
+import Model from 'fe/model';
 
 
 export default class CommitableInput extends React.Component {

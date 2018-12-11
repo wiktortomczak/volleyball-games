@@ -4,6 +4,11 @@
 import 'goog:goog.array';
 import 'goog:goog.asserts';
 import 'goog:goog.Uri';
+
+import Iterators from 'base/js/iterators';
+import Observable from 'base/js/observable';
+import {Dates, dateFromTimestamp, dateToTimestamp} from 'base/js/time';
+
 import 'goog:proto.CancelationFee';
 import 'goog:proto.Game.State';
 import 'goog:proto.GameAddRequest';
@@ -18,12 +23,9 @@ import 'goog:proto.PlayerTransactionAddRequest';
 import 'goog:proto.PlayerUpdateRequest';
 import 'goog:proto.StreamDataRequest';
 import 'goog:proto.Transaction.Type';
-import Iterators from 'base/js/iterators';
-import Observable from 'base/js/observable';
-import {Dates, dateFromTimestamp, dateToTimestamp} from 'base/js/time';
 
 import config from 'config';
-import {FacebookAuth, FacebookUtil} from 'facebook';
+import {FacebookAuth, FacebookUtil} from 'fe/facebook';
 
 
 export default class Model extends Observable {
@@ -39,6 +41,8 @@ export default class Model extends Observable {
 
     this._players = new Map();
     this._games = new Map();
+
+    this._notifications = [];
 
     this._gamesClient = null;
     this._hasGamesData = false;
@@ -113,7 +117,24 @@ export default class Model extends Observable {
     if (goog.isDefAndNotNull(opt_maxSignedUpPlayers)) {
       request.setMaxSignedUp(opt_maxSignedUpPlayers);
     }
-    return this._gamesClient.gameAdd(request);
+    return this._catchUserVisibleException(
+      this._gamesClient.gameAdd(request));
+  }
+
+  addSuccess(text) {
+    this._notifications.push(Notification.success(text));
+    this._notifyChanged();
+  }
+
+  addError(text) {
+    this._notifications.push(Notification.error(text));
+    this._notifyChanged();
+  }
+
+  consumeNotifications() {
+    const consumed = this._notifications;
+    this._notifications = [];
+    return consumed;
   }
   
   _setGamesClientFromUserCredentials(userCredentials) {
@@ -152,7 +173,7 @@ export default class Model extends Observable {
     this._players.clear();
     this._games.clear();
     gamesData.getGameList().forEach(gameProto => {
-      const game = new Game(gameProto, this._gamesClient);
+      const game = new Game(gameProto, this);
       this._games.set(game.id, game);
     });
     gamesData.getPlayerList().forEach(playerProto => {
@@ -162,6 +183,20 @@ export default class Model extends Observable {
     this._games.forEach(game => game._resolvePlayerRefs(this._players));
     this._hasGamesData = true;
     this._notifyChanged();
+  }
+
+  _catchUserVisibleException(promise) {
+    return promise.catch(error => {
+      if (error.message) {
+        const index = error.message.indexOf('UserVisibleException: ');
+        if (index != -1) {
+          const userVisibleError = error.message.substr(
+            index + 'UserVisibleException: '.length);
+          this.addError(userVisibleError);
+        }
+      }
+      throw error;
+    });
   }
 }
 
@@ -323,8 +358,9 @@ export class Transaction {
 
 export class Game {
 
-  constructor(proto, gamesClient) {
+  constructor(proto, model) {
     this._proto = proto;
+    this._model = model;
     goog.asserts.assert(
       this._proto.getSignedUpList().length >= this.maxSignedUpPlayers
       || !this._proto.getWaitingList().length);
@@ -332,7 +368,6 @@ export class Game {
     this._signedUpPlayers = null;
     this._waitingPlayers = null;
     this._playersToNotifyIfPlaceFree = null;
-    this._gamesClient = gamesClient;
   }
 
   _resolvePlayerRefs(players) {
@@ -390,6 +425,10 @@ export class Game {
   
   get maxSignedUpPlayers() {
     return this._proto.getMaxSignedUp();
+  }
+
+  static get defaultMaxSignedUpPlayers() {
+    return 12;
   }
 
   isPlayerSignedUpOrWaiting(player) {
@@ -467,18 +506,19 @@ export class Game {
     if (goog.isDefAndNotNull(opt_maxSignedUpPlayers)) {
       request.setMaxSignedUp(opt_maxSignedUpPlayers);
     }
-    return this._gamesClient.gameUpdate(request);
+    return this._model._catchUserVisibleException(
+      this._model._gamesClient.gameUpdate(request));
   }
 
   cancel() {
-    return this._gamesClient.gameCancel(
+    return this._model._gamesClient.gameCancel(
       proto.GameCancelRequest.fromObject({
         game: {id: this.id}
       }));
   }
 
   setPlayerSignedUp(player, isSignedUp) {
-    return this._gamesClient.gameSetPlayerSignedUp(
+    return this._model._gamesClient.gameSetPlayerSignedUp(
       proto.GameSetPlayerSignedUpRequest.fromObject({
         game: {id: this.id},
         player: {facebookId: player.facebookId},
@@ -487,7 +527,7 @@ export class Game {
   }
   
   setNotifyIfPlaceFree(player, shouldNotify) {
-    return this._gamesClient.gameSetNotifyPlayerIfPlaceFree(
+    return this._model._gamesClient.gameSetNotifyPlayerIfPlaceFree(
       proto.GameSetNotifyPlayerIfPlaceFreeRequest.fromObject({
         game: {id: this.id},
         player: {facebookId: player.facebookId},
@@ -508,9 +548,10 @@ export class GameBuilder {
     this._location = opt_game ? opt_game.location : null;
     this._facebookEventUrl = opt_game && opt_game.hasFacebookEventUrl
       ? opt_game.facebookEventUrl : null;
-    this._pricePln = opt_game ? opt_game.pricePln : null;
+    this._pricePln = opt_game ? opt_game.pricePln : Game.defaultPricePln;
     this._signedUpPlayers = opt_game ? opt_game.signedUpPlayers : null;
-    this._maxSignedUpPlayers = opt_game ? opt_game.maxSignedUpPlayers : null;
+    this._maxSignedUpPlayers = opt_game
+      ? opt_game.maxSignedUpPlayers : Game.defaultMaxSignedUpPlayers;
   }
 
   get isNewGame() {
@@ -606,6 +647,22 @@ export class GameBuilder {
         time.getHours(),
         time.getMinutes())
       : null;
+  }
+}
+
+export class Notification {
+
+  static success(text) {
+    return new this('success', text);
+  }
+
+  static error(text) {
+    return new this('error', text);
+  }
+
+  constructor(type, text) {
+    this.type = type;
+    this.text = text;
   }
 }
 

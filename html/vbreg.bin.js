@@ -1,1 +1,1 @@
-../build/vbreg.bin.js
+../build/fe/vbreg.bin.js

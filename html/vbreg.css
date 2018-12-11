@@ -7,15 +7,21 @@ body {
 }
 
 nav {
-    float: left;
-    padding: 10px 5px 0 10px;
+    position: absolute;
+    top: 130px;
+    left: 0;
     width: 100px;
     background-color: #eeeeee;
+    padding: 10px;
 }
 
 nav a {
     display: block;
     margin-bottom: 0.5em;
+}
+
+nav a[href="/privacy"] { 
+    font-size: smaller;
 }
 
 nav a.active {
@@ -26,41 +32,19 @@ nav a.active {
     font-weight: bold;
 }
 
-main {
-    float: left;
-    width: calc(100% - 115px);  /* TODO */
+header {
+    padding: 10px 10px 5px 140px;
+    background-color: #eeeeee;
 }
 
-header {
-    padding: 10px 10px 5px 5px;
-    background-color: #eeeeee;
+header > img {
+    position: absolute;
+    top: 10px;
+    left: 10px;
 }
 
 header h2 {
     margin: 0;
-}
-
-header div {
-    margin-left: 10px;
-    float: right;
-}
-
-section {
-    padding-left: 20px;
-    padding-bottom: 10px;
-}
-
-section#login, section#status {
-    padding-top: 20px;
-}
-
-footer {
-    clear: both;
-    padding: 5px 10px 5px 10px;
-    background-color: #eeeeee;
-}
-
-header h2 {
     display: inline;
 }
 
@@ -70,18 +54,54 @@ header > a  {
     left: 10px;
 }
 
-footer span {
+header div {
+    margin-left: 10px;
+    float: right;
+}
+
+section {
+    margin: 10px 0px 10px 140px;
+    min-height: 16em;
+    max-width: 50em;
+}
+
+section#login, section#status {
+    padding-top: 20px;
+}
+
+footer {
+    padding: 5px 10px 5px 140px;
+    background-color: #eeeeee;
+    height: 20px;
+}
+
+footer label {
+    left: 10px;
+    position: absolute;
+    font-size: initial;
+}
+
+footer span + span {
     margin-left: 1em;
 }
 
+footer span {
+    display: inline-block;
+}
+
 footer img {
+    /* vertical-align: text-bottom; */
+    float: left;
     position: relative;
-    top: 2px;
+    top: -2px;
+    margin-right: 5px;
 }
 
 footer #version {
     float: right;
     font-size: smaller;
+    position: relative;
+    top: 2px;
 }
 
 table {
@@ -129,6 +149,38 @@ dialog {
     box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
 }
 
+dialog.success, dialog.error {
+    margin: 0;
+    top: 20px;
+    left: 200px;
+    padding: 10px 20px 10px 10px;
+    border-radius: 0;
+}
+
+dialog.success {
+    border-color: #42881b;
+}
+
+dialog.error {
+    border-color: #b70707;
+}
+
+dialog.success img.icon, dialog.error img.icon {
+    position: relative;
+    top: 2px;
+}
+
+dialog.success img.close, dialog.error img.close {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    padding: 5px;
+}
+
+dialog.success span, dialog.error span {
+    margin-left: 5px;
+}
+
 input + input {
     margin-left: 10px;
 }
@@ -145,12 +197,12 @@ span.definition {
     font-size: smaller;
 }
 
-section#intro, section#instructions {
-    max-width: 40em;
+section.text {
     font-family: 'Noto Serif SC', serif;
+    max-width: 40em;
 }
 
-section#intro a {
+section#intro a, section#privacy a {
     font-family: 'Source Sans Pro', sans-serif;
 }
 
@@ -165,7 +217,7 @@ section#instructions #transactions th {
     width: 10em;
 }
 
-section#instructions #transactions td {
+section.text #transactions td {
     font-family: 'Noto Serif SC', serif;
 }
 

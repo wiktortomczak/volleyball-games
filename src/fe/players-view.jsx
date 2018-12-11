@@ -5,8 +5,8 @@ import {Link} from 'react-router-dom';
 
 import Iterators from 'base/js/iterators';
 
-import {dateTimeFormat, PLNshort} from 'formatting';
-import Model, {Game} from 'model';
+import {dateTimeFormat, PLNshort} from 'fe/formatting';
+import Model, {Game} from 'fe/model';
 
 
 export default class PlayerSection extends React.Component {
@@ -78,9 +78,11 @@ class PlayerRow extends React.Component {
                   onChange={e => this.setState({amountPln: e.target.value})} /> PLN{' '}
            <input type="text" value={this.state.source} placeholder="describe source"
                   onChange={e => this.setState({source: e.target.value})} />
-           <input type="button" value="Deposit" onClick={() => (
-             this.state.amountPln && this.state.source &&
-               player.deposit(this.state.amountPln, this.state.source))} />
+           <input type="button" value="Deposit" onClick={() => {
+             if (this.state.amountPln && this.state.source) {
+               player.deposit(this.state.amountPln, this.state.source)
+                 .then(() => this._model.addSuccess('Money has been deposited'));
+             }}} />
          </td>,
          <td>
            {lastTouch && dateTimeFormat.format(lastTouch)}

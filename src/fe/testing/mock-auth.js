@@ -1,5 +1,5 @@
 
-import {FacebookCredentials} from 'facebook';
+import {FacebookCredentials} from 'fe/facebook';
 
 /**
  * @implements {Auth}

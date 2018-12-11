@@ -2,12 +2,12 @@
 
 import 'goog:goog.asserts';
 
-import App from 'app';
-import MockAuth from 'testing/mock-auth';
-import MockAuthButtonFactory from 'testing/mock-auth-view';
-import MockGamesClient from 'testing/mock-games-client';
-import Model from 'model';
-import View from 'view';
+import App from 'fe/app';
+import Model from 'fe/model';
+import View from 'fe/view';
+import MockAuth from 'fe/testing/mock-auth';
+import MockAuthButtonFactory from 'fe/testing/mock-auth-view';
+import MockGamesClient from 'fe/testing/mock-games-client';
 
 let app;
 

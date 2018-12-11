@@ -10,10 +10,10 @@ from base.proto import empty_message_pb2
 from base.proto import persistent_proto
 from base.proto.sync import observable
 
-import config
-import vbreg_pb2
-import vbreg_pb2_grpc
-
+from src import vbreg_pb2
+from src import vbreg_pb2_grpc
+from src.be import config
+CONFIG = config.CONFIG
 
 gflags.DEFINE_string('games_data', None, 'TODO')
 FLAGS = gflags.FLAGS
@@ -25,7 +25,6 @@ class Games(vbreg_pb2_grpc.GamesServicer):
   def Create(cls):
     games_data = persistent_proto.PersistentProto.Open(
       vbreg_pb2.GamesData, FLAGS.games_data, create=True)
-    # print js_object_format.MessageToJsObject(games_data._message)
     return cls(games_data)
 
   def __init__(self, games_data):
@@ -118,7 +117,7 @@ class Games(vbreg_pb2_grpc.GamesServicer):
     with self._games_data.HoldUpdates():
       with self._games_data_lock:
         game = self._games[request.game.id]
-        game.Update(request)        
+        game.Update(request)
     return empty_message_pb2.EmptyMessage()
 
   def GameCancel(self, request, context):
@@ -147,7 +146,6 @@ class _Player(object):
     proto = vbreg_pb2.Player(
       facebook_id=request.facebook_id,
       name=request.name,
-      notify_if_new_game=True,
       bank_transfer_id=cls._GenerateBankTransferId(request.name, games),
       last_touch=time_util.DateTimeToTimestampProto(time_util.now()))
     proto.payments.balance_pln = 0
@@ -291,14 +289,11 @@ class _Game(object):
         or not request.HasField('location')
         or not request.HasField('price_pln')
         or not request.HasField('max_signed_up')):
-      raise Exception('All of start time, end time, location, price, '
-                      'number of signed up places are required')
-    start_time = time_util.DateTimeFromTimestampProto(request.start_time)
-    end_time = time_util.DateTimeFromTimestampProto(request.end_time)
-    if start_time < time_util.now():
-      raise Exception('Start time must be in the future')
-    if end_time <= start_time:
-      raise Exception('End time must be later than start time')
+      raise UserVisibleException(
+        'All of start time, end time, location, price, '
+        'number of signed up places are required')
+    self._AssertStartTimeEndTimeValid(request)
+
     facebook_event_url = (request.facebook_event_url
                           if request.HasField('facebook_event_url') else None)
     proto = vbreg_pb2.Game(
@@ -360,7 +355,7 @@ class _Game(object):
       max((self.GetStartTime() - time_util.now()).total_seconds(), 0) /
       _NUM_SECONDS_IN_DAY)
     rule = list_util.GetOnlyOneByPredicate(
-      config.config.cancelation_fee_rule, lambda rule: (
+      CONFIG.cancelation_fee_rule, lambda rule: (
         rule.min_days <= num_days_before_game and
         (not rule.HasField('max_days') or
          num_days_before_game < rule.max_days)))
@@ -376,15 +371,18 @@ class _Game(object):
     is_price_pln_changed = request.HasField('price_pln') and (
       self._proto.price_pln != request.price_pln)
 
+    if is_start_time_changed or is_end_time_changed:
+      self._AssertStartTimeEndTimeValid(request)
+
     if self._signed_up_players:
       if (is_start_time_changed or is_end_time_changed
           or is_location_changed or is_price_pln_changed):
-        raise Exception(
+        raise UserVisibleException(
           'Can not change any of start time, end time, location, price '
           'because there are signed-up players')
       if request.HasField('max_signed_up') and (
           request.max_signed_up < len(self._signed_up_players)):
-        raise Exception(
+        raise UserVisibleException(
           'Can not reduce the number of signed up places '
           'because there are players signed up for these places')
     
@@ -469,6 +467,18 @@ class _Game(object):
       self._players_to_notify_if_place_free.remove(player)
       self._PlayerRefListPop(self._proto.to_notify_if_place_free, player)
 
+  def _AssertStartTimeEndTimeValid(self, request):
+    start_time = time_util.DateTimeFromTimestampProto(
+      request.start_time if request.HasField('start_time')
+      else self._proto.start_time)
+    end_time = time_util.DateTimeFromTimestampProto(
+      request.end_time if request.HasField('end_time')
+      else self._proto.end_time)
+    if start_time < time_util.now():
+      raise UserVisibleException('Start time must be in the future')
+    if end_time <= start_time:
+      raise UserVisibleException('End time must be later than start time')
+
   @staticmethod
   def _GenerateGameId(games):
     game_id = games._games_data.last_game_id + 1
@@ -482,6 +492,13 @@ class _Game(object):
         player_ref_list.pop(i)
         return
     raise ValueError('%s not found' % player)
+
+
+class UserVisibleException(Exception):
+
+  def __init__(self, user_message):
+    Exception.__init__(self, 'UserVisibleException: ' + user_message)
+    self.user_message = user_message
 
 
 observable.GenerateObservableClass(vbreg_pb2.GamesData, None)

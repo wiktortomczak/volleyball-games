@@ -1,7 +1,7 @@
 
 import React from 'react';
 
-import {dateFormat} from 'formatting';
+import {dateFormat} from 'fe/formatting';
 
 
 export class GameDescription extends React.Component {
