@@ -292,7 +292,7 @@ class _Game(object):
       raise UserVisibleException(
         'All of start time, end time, location, price, '
         'number of signed up places are required')
-    self._AssertStartTimeEndTimeValid(request)
+    cls._AssertStartTimeEndTimeValid(request)
 
     facebook_event_url = (request.facebook_event_url
                           if request.HasField('facebook_event_url') else None)
@@ -372,7 +372,7 @@ class _Game(object):
       self._proto.price_pln != request.price_pln)
 
     if is_start_time_changed or is_end_time_changed:
-      self._AssertStartTimeEndTimeValid(request)
+      self._AssertStartTimeEndTimeValid(request, self._proto)
 
     if self._signed_up_players:
       if (is_start_time_changed or is_end_time_changed
@@ -467,13 +467,14 @@ class _Game(object):
       self._players_to_notify_if_place_free.remove(player)
       self._PlayerRefListPop(self._proto.to_notify_if_place_free, player)
 
-  def _AssertStartTimeEndTimeValid(self, request):
+  @classmethod
+  def _AssertStartTimeEndTimeValid(cls, request, proto=None):
     start_time = time_util.DateTimeFromTimestampProto(
       request.start_time if request.HasField('start_time')
-      else self._proto.start_time)
+      else proto.start_time)
     end_time = time_util.DateTimeFromTimestampProto(
       request.end_time if request.HasField('end_time')
-      else self._proto.end_time)
+      else proto.end_time)
     if start_time < time_util.now():
       raise UserVisibleException('Start time must be in the future')
     if end_time <= start_time:

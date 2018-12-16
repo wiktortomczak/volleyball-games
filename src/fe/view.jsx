@@ -168,7 +168,7 @@ export default class View extends React.Component {
           <a href="https://www.messenger.com/t/wiktor.tomczak.10">messenger</a>{' | '}
           <a href={'mailto:wiktor.tomczak' + '@gmail.com'}>email</a>
         </span>
-        <span id="version">v. 0.2</span>
+        <span id="version">v. 0.2.1</span>
       </footer>
     );
   }
