@@ -176,7 +176,8 @@ message Transaction {
 
 
 message Configuration {
-  repeated CancelationFeeRule cancelation_fee_rule = 1;
+  optional string version = 1;
+  repeated CancelationFeeRule cancelation_fee_rule = 2;
 }
 
 message CancelationFeeRule {

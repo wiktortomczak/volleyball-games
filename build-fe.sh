@@ -50,6 +50,7 @@ JSX=(
   src/fe/games-view.jsx
   src/fe/instructions-view.jsx
   src/fe/intro-view.jsx
+  src/fe/modal-dialog.jsx
   src/fe/players-view.jsx
   src/fe/profile-view.jsx
   src/fe/view.jsx
@@ -94,15 +95,16 @@ for vbreg in $@; do
     --js='src/fe/**.js'  \
     --js='!src/fe/*.externs.js'  \
     --js=build  \
-    --js=$ITRADER/base/js/iterators.js  \
-    --js=$ITRADER/base/js/observable.js  \
-    --js=$ITRADER/base/js/stream.js  \
-    --js=$ITRADER/base/js/log.js  \
-    --js=$ITRADER/base/js/classes.js  \
+    --js=$ITRADER/base/js/arrays.js  \
     --js=$ITRADER/base/js/classes.goog.js  \
+    --js=$ITRADER/base/js/classes.js  \
+    --js=$ITRADER/base/js/iterators.js  \
+    --js=$ITRADER/base/js/log.js  \
     --js=$ITRADER/base/js/objects.goog.js  \
-    --js=$ITRADER/base/js/time.js  \
+    --js=$ITRADER/base/js/observable.js  \
     --js=$ITRADER/base/js/proto/enum.js  \
+    --js=$ITRADER/base/js/stream.js  \
+    --js=$ITRADER/base/js/time.js  \
     --js=$CLOSURE_LIBRARY  \
     --js=$PROTOBUF  \
     --js=$GRPC_WEB/javascript  \

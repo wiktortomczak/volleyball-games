@@ -2,8 +2,14 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 
+import Model from 'fe/model';
+
 
 export default class IntroSection extends React.Component {
+
+  get _auth() {
+    return this.context.model.auth;
+  }
 
   render() {
     return (
@@ -21,14 +27,22 @@ export default class IntroSection extends React.Component {
           </a> Check it out for latest news.
         </p>
         <p>
+          {this.context.authButtonFactory.renderLoginButton(
+             this._auth, {size: 'large'})}
+        </p>
+        <p>
           <span className="important">Note:</span> This is work in progress.
         </p>
         <p>
           The following does not work yet:
           <ul>
             <li>Email notifications.</li>
-            <li>Support for any web browser and for mobile phones.<br/>
-                Use Chrome 63+ or Firefox 52+ on a desktop computer.</li>
+            <li>Support for any web browser.
+              <ul>
+                <li>Desktop: use Chrome 63+ or Firefox 52+</li>
+                <li>Mobile: &nbsp;use Chrome 50+ or TODO</li>
+              </ul>
+            </li>
           </ul>
           If you notice any technical problems, please let Wiktor know.<br/>
           (contact details at the bottom)
@@ -37,3 +51,9 @@ export default class IntroSection extends React.Component {
     );
   }
 }
+
+IntroSection.contextTypes = {
+  model: PropTypes.instanceOf(Model).isRequired,
+  authButtonFactory: PropTypes.instanceOf(Object).isRequired
+};
+

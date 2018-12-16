@@ -1,14 +1,15 @@
+/* global goog */
 
 import React from 'react';
 
 export class FacebookAuthButtonFactory {
 
-  static createLoginButton(auth) {
-    return <FacebookLoginLogoutButton size={'large'} />;
+  static renderLoginButton(auth, props) {
+    return <FacebookLoginLogoutButton auth={auth} {...props} />;
   }
 
-  static createLogoutButton(auth) {
-    return <FacebookLoginLogoutButton size={'small'} />;
+  static renderLogoutButton(auth, props) {
+    return <FacebookLoginLogoutButton auth={auth} {...props} />;
   }
 }
 
@@ -16,19 +17,31 @@ class FacebookLoginLogoutButton extends React.Component {
 
   constructor(props) {
     super(props);
-    this._size = props.size;
   }
 
+  get _auth() {
+    return this.props.auth;
+  }
+
+  get _size() {
+    return this.props.size;
+  }
+  
   render() {
-    return (
-      <div className="fb-login-button"
-        data-max-rows="1"
-        data-size={this._size}
-        data-button-type="login_with"
-        data-show-faces="false"
-        data-auto-logout-link="true"
-        data-use-continue-as="false">
-      </div>
-    );
+    if (!goog.isDef(this._auth.userCredentials)) {
+      return this._size == 'large' ? 'Checking if logged in...' : null;
+    } else {
+      const action = !this._auth.userCredentials
+       ? (this._size == 'large' ? 'Log in with Facebook' : 'Log in' )
+       : 'Log out';
+      const handleClick = !this._auth.userCredentials
+        ? this._auth.login.bind(this._auth)
+        : this._auth.logout.bind(this._auth);
+      return (
+        <button className={'login_fb ' + this._size} onClick={handleClick}>
+          {action}
+        </button>
+      );
+    }
   }
 }

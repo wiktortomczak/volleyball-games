@@ -31,7 +31,7 @@ export default class ProfileSection extends React.Component {
       <section id="profile">
         <h3>{!!this.props.player && this.props.player.name + '\'s '}Profile</h3>
         <CommitableInput
-           type="email" label="E-mail" size="40"
+           type="email" label="E-mail" size="30"
            value={(props, context) => this._getPlayer(props, context).email}
            onCommit={email => {
              if (email != this._getPlayer().email) {
@@ -58,21 +58,26 @@ export default class ProfileSection extends React.Component {
         </p>
      
         <h3>Payments</h3>
-        <ul>
-          <li>Balance:{' '}
-            <span>{PLN.format(player.balancePln)}</span><br/>
-            (Free: <span>{PLN.format(player.freeBalancePln)}</span>)
-          </li>
-          <li>Total deposited:{' '}
-            <span>{PLN.format(player.totalDepositedPln)}</span>
-          </li>
-          <li>Total paid:{' '}
-            <span>{PLN.format(player.totalPaidPln)}</span>
-          </li>
-          <li>Total blocked:{' '}
-            <span>{PLN.format(player.totalBlockedPln)}</span>
-          </li>
-        </ul>
+        <table id="payments">
+          <tr>
+            <th>Balance</th>
+            <td className="number">{PLN.format(player.balancePln)}</td>
+            <th>Free</th>
+            <td className="number">{PLN.format(player.freeBalancePln)}</td>
+          </tr>
+          <tr>
+            <th>Total deposited</th>
+            <td className="number">{PLN.format(player.totalDepositedPln)}</td>
+          </tr>
+          <tr>
+            <th>Total paid</th>
+            <td className="number">{PLN.format(player.totalPaidPln)}</td>
+          </tr>
+          <tr>
+            <th>Total blocked</th>
+            <td className="number">{PLN.format(player.totalBlockedPln)}</td>
+          </tr>
+        </table>
         <input type="button" value="Withdraw money"
                onClick={this._handleWithdraw.bind(this)} />{' '}
         <CommitableInput

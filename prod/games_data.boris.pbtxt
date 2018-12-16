@@ -1,6 +1,6 @@
 player {
-  facebook_id: '100003691337523'
-  name: 'Boris Anisimov'
+  facebook_id: '1582200858579610'
+  name: 'Boris  Anisimov'
   is_admin: true
   payments {
     balance_pln: 0

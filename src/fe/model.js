@@ -3,8 +3,8 @@
 
 import 'goog:goog.array';
 import 'goog:goog.asserts';
-import 'goog:goog.Uri';
 
+import Arrays from 'base/js/arrays';
 import Iterators from 'base/js/iterators';
 import Observable from 'base/js/observable';
 import {Dates, dateFromTimestamp, dateToTimestamp} from 'base/js/time';
@@ -26,12 +26,13 @@ import 'goog:proto.Transaction.Type';
 
 import config from 'config';
 import {FacebookAuth, FacebookUtil} from 'fe/facebook';
+import feConfig from 'fe/fe-config.js';
 
 
 export default class Model extends Observable {
   
   static create() {
-    return new this(FacebookAuth.create(), this._createGamesClient);
+    return new this(FacebookAuth.create(), this._createGamesClient.bind(this));
   }
 
   constructor(auth, createGamesClientFunc) {
@@ -43,6 +44,8 @@ export default class Model extends Observable {
     this._games = new Map();
 
     this._notifications = [];
+    this._waitingForServerDataWarning = null;
+    this._waitingForServerDataTimeout = null;
 
     this._gamesClient = null;
     this._hasGamesData = false;
@@ -91,6 +94,10 @@ export default class Model extends Observable {
       Iterators.filter(this._games.values(), game => game.isEnded)));
   }
 
+  get notifications() {
+    return this._notifications;
+  }
+
   setIsAdminMode(isAdminMode) {
     this._isAdminMode = isAdminMode;
     this._notifyChanged();
@@ -121,26 +128,37 @@ export default class Model extends Observable {
       this._gamesClient.gameAdd(request));
   }
 
-  addSuccess(text) {
-    this._notifications.push(Notification.success(text));
+  addSuccess(text, opt_isSticky) {
+    const notification = Notification.success(text, opt_isSticky);
+    this._notifications.push(notification);
     this._notifyChanged();
+    return notification;
   }
 
-  addError(text) {
-    this._notifications.push(Notification.error(text));
+  addError(text, opt_isSticky) {
+    const notification = Notification.error(text, opt_isSticky);
+    this._notifications.push(notification);
     this._notifyChanged();
+    return notification;
   }
 
-  consumeNotifications() {
-    const consumed = this._notifications;
-    this._notifications = [];
-    return consumed;
+  addWarning(text, opt_isSticky) {
+    const notification = Notification.warning(text, opt_isSticky);
+    this._notifications.push(notification);
+    this._notifyChanged();
+    return notification;
+  }
+
+  removeNotification(notification) {
+    this._notifications = Arrays.remove(this._notifications, notification);
+    this._notifyChanged();
   }
   
   _setGamesClientFromUserCredentials(userCredentials) {
     if (userCredentials) {
       this._connectToGamesService(userCredentials);
     } else {
+      // TODO: Cancel active gamesClient RPCs.
       this._gamesClient = null;
       this._hasGamesData = false;
       this._players.clear();
@@ -155,18 +173,34 @@ export default class Model extends Observable {
       proto.PlayerAddOrTouchRequest.fromObject({
         facebookId: userCredentials.facebookId,
         name: userCredentials.name}))
-      .then(() => {
-        const gamesDataStream = this._gamesClient.streamData(
-          proto.StreamDataRequest.fromObject({
-            facebookId: userCredentials.facebookId}));
-        gamesDataStream.on('data', gamesData => (
-          this._updateFromGamesData(gamesData)));
-      });
+      .then(() => this._streamDataFromGamesService(userCredentials));
+  }
+
+  _streamDataFromGamesService(userCredentials) {
+    const gamesDataStream = this._gamesClient.streamData(
+      proto.StreamDataRequest.fromObject({
+        facebookId: userCredentials.facebookId}));
+    this._addWaitingForServerDataWarning();
+    let hasData = false;
+    gamesDataStream.on('data', gamesData => {
+      hasData = true;
+      this._removeWaitingForServerDataWarning();
+      this._updateFromGamesData(gamesData);
+    });
+    gamesDataStream.on('error', error => {
+      if (error.code == 14 && hasData) {
+        // Likely a termination of an idle HTTP keep-alive request.
+        this._streamDataFromGamesService(userCredentials);
+      } else {
+        console.log('StreamData error');
+        console.log(error);
+      }
+    });
   }
 
   static _createGamesClient(userCredentials) {
     // TODO: Use userCredentials.
-    return new proto.GamesPromiseClient(_getLocationSchemeHostPort());
+    return new proto.GamesPromiseClient(feConfig.uri);
   }
 
   _updateFromGamesData(gamesData) {
@@ -183,6 +217,24 @@ export default class Model extends Observable {
     this._games.forEach(game => game._resolvePlayerRefs(this._players));
     this._hasGamesData = true;
     this._notifyChanged();
+  }
+
+  _addWaitingForServerDataWarning() {
+    this._waitingForServerDataTimeout = window.setTimeout(() => {
+      if (!this._waitingForServerDataWarning) {
+        this._waitingForServerDataWarning =
+          this.addWarning('Waiting for server data...', true /* isSticky */);
+      }
+    }, 1000);
+  }
+
+  _removeWaitingForServerDataWarning() {
+    if (this._waitingForServerDataWarning) {
+      this.removeNotification(this._waitingForServerDataWarning);
+      this._waitingForServerDataWarning = null;
+    }
+    window.clearTimeout(this._waitingForServerDataTimeout);
+    this._waitingForServerDataTimeout = null;
   }
 
   _catchUserVisibleException(promise) {
@@ -652,26 +704,23 @@ export class GameBuilder {
 
 export class Notification {
 
-  static success(text) {
-    return new this('success', text);
+  static success(text, opt_isSticky) {
+    return new this('success', text, opt_isSticky);
   }
 
-  static error(text) {
-    return new this('error', text);
+  static error(text, opt_isSticky) {
+    return new this('error', text, opt_isSticky);
   }
 
-  constructor(type, text) {
+  static warning(text, opt_isSticky) {
+    return new this('warning', text, opt_isSticky);
+  }
+
+  constructor(type, text, opt_isSticky) {
     this.type = type;
     this.text = text;
+    this.isSticky = opt_isSticky;
   }
-}
-
-function _getLocationSchemeHostPort() {
-  const uri = goog.Uri.parse(window.location.href);
-  return (
-    (uri.hasScheme() ? (uri.getScheme() + '://') : '')
-    + uri.getDomain()
-    + (uri.hasPort() ? ':' + uri.getPort() : ''));
 }
 
 const _NUM_MILLISECONDS_IN_DAY = 1000 * 60 * 60 * 24;

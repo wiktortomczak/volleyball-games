@@ -2,6 +2,8 @@
 import FB from 'fb';
 import Observable from 'base/js/observable';
 
+import feConfig from 'fe/fe-config.js';
+
 
 /**
  * @implements {Auth}
@@ -10,17 +12,35 @@ export class FacebookAuth extends Observable {
 
   static create() {
     const auth = new this;
+
+    FB.init({
+      appId: feConfig.facebookAppId,
+      version: 'v3.2',
+      cookie: true,
+      oauth: true,
+      status: true
+    });
     FB.getLoginStatus(response => (
       auth._setUserCredentialsFromFacebookResponse(response)));
-    FB.Event.subscribe('auth.statusChange', response => (
+    FB.Event.subscribe('auth.authResponseChange', response => (
       auth._setUserCredentialsFromFacebookResponse(response)));
-    // FB.Event.subscribe('auth.logout', this.onLogout.bind(this));
+
     return auth;
   }
 
   constructor() {
     super();
-    this._userCredentials = null;
+    this._userCredentials = undefined;
+  }
+
+  /** @override */
+  login() {
+    FB.login();  // Triggers authResponseChange.
+  }
+
+  /** @override */
+  logout() {
+    FB.logout();  // Triggers authResponseChange.
   }
 
   /** @override */
@@ -29,7 +49,8 @@ export class FacebookAuth extends Observable {
   }
 
   _setUserCredentials(userCredentials) {
-    if ((!!this._userCredentials != !!userCredentials)
+    if (!goog.isDef(this._userCredentials)
+        || (!!this._userCredentials != !!userCredentials)
         || (this._userCredentials
             && !this._userCredentials.equals(userCredentials))) {
       this._userCredentials = userCredentials;
@@ -39,11 +60,10 @@ export class FacebookAuth extends Observable {
 
   _setUserCredentialsFromFacebookResponse(response) {
     // TODO: debug log.
-    // console.log('response=' + JSON.stringify(response));
-
     if (response['status'] == 'connected') {
-      FacebookCredentials.fromAuthResponse(response['authResponse']).then(
-        userCredentials => this._setUserCredentials(userCredentials));
+      FacebookCredentials.fromAuthResponse(response['authResponse'])
+        .then(userCredentials => this._setUserCredentials(userCredentials))
+        .catch((error) => {console.log(error); this._setUserCredentials(null);});
     } else {
       this._setUserCredentials(null);
     }

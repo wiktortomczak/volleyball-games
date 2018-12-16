@@ -11,6 +11,7 @@ import {Dates} from 'base/js/time';
 import CancelationFees from 'fe/cancelation-fees';
 import {dateFormat, hourMinuteFormat, PLNshort} from 'fe/formatting';
 import {GameDescription} from 'fe/game';
+import ModalDialog from 'fe/modal-dialog';
 import Model, {Game, GameBuilder} from 'fe/model';
 import {PlayerImage} from 'fe/players-view';
 
@@ -24,6 +25,10 @@ export default class GamesSection extends React.Component {
 
   get _model() {
     return this.context.model;
+  }
+
+  get _createAndShowModal() {
+    return this.context.createAndShowModal;
   }
 
   _getUser() {
@@ -58,33 +63,29 @@ export default class GamesSection extends React.Component {
     }
     return (
       <table>
-        <thead>
-          <tr>
-            <th>Date &amp; Time</th>
-            <th>Location</th>
-            <th>Facebook event</th>
-            <th>Price</th>
-            <th className="players">Players</th>
-            {upcomingOrEnded == 'upcoming' &&
-             <th className="actions">Actions</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {games.map(game => (
-            game instanceof Game ? this._renderGame(game, upcomingOrEnded) :
-            game instanceof GameBuilder ? this._renderGameBuilder(game) :
-            _throw(Error('Internal error'))))}
+        <tr>
+          <th>Date &amp; Time</th>
+          <th>Location</th>
+          <th>Facebook event</th>
+          <th>Price</th>
+          <th className="players">Players</th>
           {upcomingOrEnded == 'upcoming' &&
-           this._model.isAdminMode && !this.state.gameBuilder &&
-           <tr>
-             <td colSpan="5" className="no_border" />
-             <td className="no_border">
-              <input type="button" value={'Add game'}
-                     onClick={() => this._handleAddUpcomingGame()}></input>
-             </td>
-           </tr>
-          }
-        </tbody>
+           <th className="actions">Actions</th>}
+        </tr>
+        {games.map(game => (
+          game instanceof Game ? this._renderGame(game, upcomingOrEnded) :
+          game instanceof GameBuilder ? this._renderGameBuilder(game) :
+          _throw(Error('Internal error'))))}
+        {upcomingOrEnded == 'upcoming' &&
+         this._model.isAdminMode && !this.state.gameBuilder &&
+         <tr>
+           <td colSpan="5" className="no_border" />
+           <td className="no_border">
+            <input type="button" value={'Add game'}
+                   onClick={() => this._handleAddUpcomingGame()}></input>
+           </td>
+         </tr>
+        }
       </table>
     );
   }
@@ -185,27 +186,21 @@ export default class GamesSection extends React.Component {
     const user = this._getUser();
     if (!this._model.isAdminMode) {
       if (!game.isPlayerSignedUpOrWaiting(user)) {
-        // TODO: Remove code duplication. Abstract modal code.
-        const stateKey = `signup-${game.id}`;
         const actions = [
-          <input type="button" value="Sign up"
-                 onClick={() => this.setState({[stateKey]: true})} />,
-          this.state[stateKey] &&
-            <SignUpConfirmation game={game} onClose={() => this.setState({[stateKey]: false})} />
+          <input type="button" value="Sign up" onClick={() => {
+            this._createAndShowModal(SignUpConfirmation, {game});
+          }}/>
         ];
         if (game.hasMaxSignedUpPlayers) {
           actions.push(this._renderNotifyIfPlaceFree(game, user));
         }
         return actions;
       } else {
-        // TODO: Remove code duplication. Abstract modal code.
-        const stateKey = `cancel-${game.id}`;
-        return [
-          <input type="button" value="Cancel"
-                 onClick={() => this.setState({[stateKey]: true})} />,
-          this.state[stateKey] &&
-            <CancelConfirmation game={game} onClose={() => this.setState({[stateKey]: false})} />
-        ];
+        return (
+          <input type="button" value="Cancel" onClick={() => {
+            this._createAndShowModal(CancelConfirmation, {game});
+          }}/>
+        );
       }
     } else {  // isAdminMode
       return [
@@ -249,18 +244,15 @@ export default class GamesSection extends React.Component {
 }
 
 GamesSection.contextTypes = {
-  model: PropTypes.instanceOf(Model).isRequired
+  model: PropTypes.instanceOf(Model).isRequired,
+  createAndShowModal: PropTypes.func.isRequired
 };
 
 
-class SignUpConfirmation extends React.Component {
+class SignUpConfirmation extends ModalDialog {
 
   get _game() {
     return this.props.game;
-  }
-
-  get _onClose() {
-    return this.props.onClose;
   }
 
   get _model() {
@@ -269,6 +261,12 @@ class SignUpConfirmation extends React.Component {
 
   _getUser() {
     return this.context.model.getUser();
+  }
+
+  componentDidMount() {
+    // TODO: Get autofocus to work instead.
+    super.componentDidMount();
+    this._dialog.getElementsByTagName('input')[0].focus();
   }
 
   render() {
@@ -289,7 +287,7 @@ class SignUpConfirmation extends React.Component {
          <div className="important">
            <p>
              <span className="important">Note:</span>{' '}
-             You do not have enough money in your account.<br/>
+             You do not have enough money in your account.
              You can still sign up and pay right after.
            </p>
          </div>}
@@ -297,7 +295,7 @@ class SignUpConfirmation extends React.Component {
          <div className="important">
            <p>
              <span className="important">Note:</span>{' '}
-             There are no places left. You are joining the waiting list.<br/>
+             There are no places left. You are joining the waiting list.
              You will be signed up <span className="important">automatically</span> if:
              <ul>
                <li>A place is free (a signed-up player cancels), and</li>
@@ -319,12 +317,12 @@ class SignUpConfirmation extends React.Component {
             </li>
             {!!missingBalancePln &&
              <li>You deposit the missing {PLNshort.format(missingBalancePln)}{' '}
-                 in your account now.<br/>
+                 in your account now.{' '}
                <span className="smaller">
                  (<HashLink to="/instructions#deposits">instructions</HashLink>)
                </span>
              </li>}
-            <li>In case you need to cancel, a cancelation fee is deducted<br/>
+            <li>In case you need to cancel, a cancelation fee is deducted
                 from the money returned to your account:
                <CancelationFees game={this._game} />
             </li>
@@ -339,42 +337,32 @@ class SignUpConfirmation extends React.Component {
            </ul>
          </p>
         } 
-        <input type="button" value={action} onClick={() => this._handleSignUp()} />
-        <input type="button" value="No" onClick={this._onClose} />
+        <input type="button" value={action}
+               onClick={() => this._handleSignUp()} />
+        <input type="button" value="No" onClick={() => this._close()} />
       </dialog>
     );
-  }
-  
-  componentDidMount() {
-    const dialog = document.getElementsByTagName('dialog')[0];  // TODO
-    dialogPolyfill.registerDialog(dialog);
-    dialog.addEventListener('close', this._onClose);
-    dialog.addEventListener('cancel', this._onClose);
-    dialog.showModal();
   }
 
   _handleSignUp() {
     this._game.setPlayerSignedUp(this._getUser(), true /* isSignedUp */)
       .then(() => {
-        this._onClose();
+        this._close();
         this._model.addSuccess('You have signed up for the game');
       });
   }
 }
 
 SignUpConfirmation.contextTypes = {
-  model: PropTypes.instanceOf(Model).isRequired
+  model: PropTypes.instanceOf(Model).isRequired,
+  closeModal: PropTypes.func.isRequired
 };
 
 
-class CancelConfirmation extends React.Component {
+class CancelConfirmation extends ModalDialog {
 
   get _game() {
     return this.props.game;
-  }
-
-  get _onClose() {
-    return this.props.onClose;
   }
 
   _getUser() {
@@ -417,31 +405,25 @@ class CancelConfirmation extends React.Component {
                   your account will be unblocked.</li>
             </ul>}
         <input type="button" value="Cancel" onClick={() => this._handleCancel()} />
-        <input type="button" value="No" onClick={this._onClose} />
+        <input type="button" value="No" onClick={() => this._close()} />
       </dialog>
     );
-  }
-  
-  componentDidMount() {
-    const dialog = document.getElementsByTagName('dialog')[0];  // TODO
-    dialogPolyfill.registerDialog(dialog);
-    dialog.addEventListener('close', this._onClose);
-    dialog.addEventListener('cancel', this._onClose);
-    dialog.showModal();
   }
 
   _handleCancel() {
     this._game.setPlayerSignedUp(this._getUser(), false /* isSignedUp */)
       .then(() => {
-        this._onClose();
+        this._close();
         this._model.addSuccess('You have canceled your participation in the game');
       });
   }
 }
 
 CancelConfirmation.contextTypes = {
-  model: PropTypes.instanceOf(Model).isRequired
+  model: PropTypes.instanceOf(Model).isRequired,
+  closeModal: PropTypes.func.isRequired
 };
+
 
 function _throw(e) {
   throw e;

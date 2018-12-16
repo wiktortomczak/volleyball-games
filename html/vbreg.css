@@ -1,5 +1,10 @@
 @import url('https://fonts.googleapis.com/css?family=Noto+Serif+SC|Source+Sans+Pro');
 
+html {
+    font-size: 16px;
+    line-height: 1.3em;
+}
+
 body {
     margin: 0;
     padding: 0;
@@ -8,23 +13,14 @@ body {
 
 nav {
     position: absolute;
-    top: 130px;
+    top: 8em;
     left: 0;
     width: 100px;
     background-color: #eeeeee;
     padding: 10px;
 }
 
-nav a {
-    display: block;
-    margin-bottom: 0.5em;
-}
-
-nav a[href="/privacy"] { 
-    font-size: smaller;
-}
-
-nav a.active {
+nav a.active:link, nav a.active:visited {
     pointer-events: none;
     cursor: default;
     text-decoration: none;
@@ -32,15 +28,80 @@ nav a.active {
     font-weight: bold;
 }
 
+nav a {
+    display: block;
+}
+
+nav a + a {
+    margin-top: 0.5em;
+}
+
+nav a[href="/privacy"] {
+    font-size: smaller;
+}
+
+nav div, nav button, nav hr + button + hr {
+    display: none;
+}
+
+#show_nav {
+    display: none;
+}
+
+@media (max-width: 700px) {
+    nav {
+        display: none;
+    }
+    
+    nav:active, #show_nav:focus ~ nav {
+        display: initial;
+        left: initial;
+        right: 0px;
+        top: 42px;
+    }
+
+    #show_nav {
+        display: initial;
+        position: absolute;
+        top: 2px;
+        right: 10px;
+        width: 32px;
+        height: 32px;
+        background: url(menu-32x32.png) no-repeat;
+        border: 0;
+        padding: 0;
+    }
+
+    #show_nav:focus {
+        background: url(menu-pressed-32x32.png) no-repeat;
+        outline: none;
+    }
+
+    nav button, nav div {
+        display: block;
+    }
+
+    nav hr + button + hr {
+        display: block;
+    }
+
+    nav a + button, nav div {
+        margin-top: 10px;
+    }
+}
+
 header {
-    padding: 10px 10px 5px 140px;
+    padding: 10px 10px 8px 8.75em;
     background-color: #eeeeee;
 }
 
-header > img {
+header #volleyball {
     position: absolute;
     top: 10px;
     left: 10px;
+    width: 100px;
+    height: 140px;
+    background: url(volleyball-100x140.png) no-repeat;
 }
 
 header h2 {
@@ -48,49 +109,114 @@ header h2 {
     display: inline;
 }
 
-header > a  {
+header h2 a {
     position: relative;
     top: 2px;
-    left: 10px;
+    left: 5px;
 }
 
-header div {
-    margin-left: 10px;
+header #user_name {
+    position: relative;
+    top: -1px;
+}
+
+header input {
+    vertical-align: middle;
+}
+
+header > *:not(h2) {
     float: right;
 }
 
+header > * + * + * {
+    margin-right: 10px;
+}
+
+
+@media (max-width: 700px) {
+    header {
+        padding-left: 10px;
+
+    }
+    header #volleyball {
+        top: 5px;
+        left: 5px;
+        width: 40px;
+        height: 56px;
+        background: url(volleyball-40x56.png) no-repeat;
+    }
+
+    header h2 {
+        display: block;
+        margin-left: 2em;
+    }
+
+    header > div:not(#volleyball), header > button, header span, header a {
+        display: none;
+    }
+}
+
 section {
-    margin: 10px 0px 10px 140px;
-    min-height: 16em;
+    margin: 10px 0px 10px 8.75em;
+    min-height: 20em;
     max-width: 50em;
 }
 
-section#login, section#status {
-    padding-top: 20px;
+
+@media (max-width: 700px) {
+    section {
+        margin-left: 1em;
+        margin-right: 1em;
+    }
 }
 
 footer {
-    padding: 5px 10px 5px 140px;
+    padding: 5px 10px 5px 8.75em;
     background-color: #eeeeee;
     height: 20px;
+    position: relative;
+}
+
+@media (max-width: 700px) {
+    footer {
+        padding: 5px;
+        height: initial;
+    }
 }
 
 footer label {
-    left: 10px;
     position: absolute;
+    left: 10px;
     font-size: initial;
 }
 
-footer span + span {
-    margin-left: 1em;
+@media (max-width: 700px) {
+    footer label {
+        display: none;
+    }
 }
 
 footer span {
     display: inline-block;
 }
 
+@media (max-width: 700px) {
+    footer span {
+        display: block;
+    }
+}
+
+footer span + span {
+    margin-left: 1em;
+}
+
+@media (max-width: 700px) {
+    footer span + span {
+        margin-left: 2px;
+    }
+}
+
 footer img {
-    /* vertical-align: text-bottom; */
     float: left;
     position: relative;
     top: -2px;
@@ -98,10 +224,16 @@ footer img {
 }
 
 footer #version {
-    float: right;
+    position: absolute;
+    bottom: 2px;
+    right: 5px;
     font-size: smaller;
-    position: relative;
-    top: 2px;
+}
+
+nav a:link, nav a:visited,
+header a:link, header a:visited,
+footer a:link, footer a:visited {
+    color: rgb(0, 0, 238);
 }
 
 table {
@@ -114,6 +246,10 @@ td, th {
     font-family: 'Source Sans Pro', sans-serif;
 }
 
+th {
+    text-align: left;
+}
+
 td.no_border {
     border: none;
 }
@@ -123,7 +259,6 @@ td.number {
 }
 
 table.light {
-    border-collapse: collapse;
     border-style: hidden;
 }
 
@@ -131,15 +266,19 @@ input {
     font-family: 'Source Sans Pro', sans-serif;
 }
 
+input[type="checkbox"] {
+    margin-right: 3px;
+}
+
 input[type="button"] {
-    font-size: 13.33px
+    font-size: smaller;
 }
 
 label {
-    font-size: 13.33px
+    font-size: smaller;
 }
 
-input[type="number"] {
+input[type="number"], input.time {
     width: 3em;
 }
 
@@ -147,38 +286,52 @@ dialog {
     border: 1px solid rgba(0, 0, 0, 0.3);
     border-radius: 6px;
     box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+    max-width: 24em;
 }
 
-dialog.success, dialog.error {
+dialog.notification {
+    position: fixed;
     margin: 0;
     top: 20px;
-    left: 200px;
-    padding: 10px 20px 10px 10px;
+    left: 12em;
+    padding: 10px;
     border-radius: 0;
 }
 
-dialog.success {
+@media (max-width: 700px) {
+    dialog.notification {
+        left: 2em;
+        margin-right: 4em;
+    }
+}
+
+dialog.notification.success {
     border-color: #42881b;
 }
 
-dialog.error {
+dialog.notification.error {
     border-color: #b70707;
 }
 
-dialog.success img.icon, dialog.error img.icon {
-    position: relative;
-    top: 2px;
+dialog.notification.warning {
+    border-color: #cf9819;
 }
 
-dialog.success img.close, dialog.error img.close {
-    position: absolute;
+dialog.notification img.icon {
+    position: relative;
     top: 2px;
-    right: 2px;
+    margin-right: 5px;
+}
+
+dialog.notification img.close {
+    position: absolute;
+    top: -3px;
+    right: -3px;
     padding: 5px;
 }
 
-dialog.success span, dialog.error span {
-    margin-left: 5px;
+dialog.notification.sticky img.close {
+    display: none;
 }
 
 input + input {
@@ -193,17 +346,10 @@ span.definition {
     font-weight: bold;
 }
 
-.smaller {
-    font-size: smaller;
-}
-
 section.text {
-    font-family: 'Noto Serif SC', serif;
     max-width: 40em;
-}
-
-section#intro a, section#privacy a {
-    font-family: 'Source Sans Pro', sans-serif;
+    font-family: 'Noto Serif SC', serif;
+    line-height: 1.4em;
 }
 
 section#intro img {
@@ -212,12 +358,15 @@ section#intro img {
     margin-right: 5px;
 }
 
+section#intro button {
+    margin: 10px 0;
+}
+
 section#instructions #transactions th {
-    text-align: left;
     width: 10em;
 }
 
-section.text #transactions td {
+section#instructions #transactions td {
     font-family: 'Noto Serif SC', serif;
 }
 
@@ -226,6 +375,10 @@ section#games td.players, section#games th.players {
 }
 
 section#games td.actions, section#games th.actions {
+    max-width: 8em;
+}
+
+section#games td.actions, section#games th.actions p {
     max-width: 8em;
 }
 
@@ -255,27 +408,77 @@ section#games td input[type="text"] {
     width: 100%;
 }
 
-section#games td input.time {
+section#games td input[type="text"].time {
     width: 3em;
 }
 
 section#games td > input[type="button"] {
     display: block;
-    margin-top: 5px;
     margin-left: 0;
+}
+
+section#games td > input[type="button"] + input[type="button"] {
+    margin-top: 5px;
 }
 
 section#games .positive_balance {
     color: green;
 }
 
+section#profile label {
+    font-size: initial;
+}
+
+section#profile form {
+    margin-bottom: 0;
+}
+
+section#profile table#payments {
+    margin-bottom: 1em;
+    border-collapse: separate;
+    border-spacing: 2px;
+}
+
+section#profile table#payments th {
+    border: none;
+}
+
+section#profile input[type="button"] {
+    margin-bottom: 10px;
+}
+
+@media (max-width: 700px) {
+    section#games table {
+        display: block;
+    }
+    section#games tr {
+        display: block;
+        border-bottom: 1px solid black;
+        margin: 0.5em 0em;
+    }
+    section#games tr:first-child {
+        display: none;
+    }
+    section#games td {
+        display: block;
+        border: 0;
+        padding: 0;
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+    section#games td.actions {
+        margin-top: 10px;
+        max-width: initial;
+    }
+
+    section#games td.actions p {
+        margin: 0.5em 0em;
+    }
+}
+
 section#players .player img {
     vertical-align: middle;
     margin-right: 5px;
-}
-
-section#players .positive_balance {
-    color: black;
 }
 
 form.commitable_input {
@@ -290,10 +493,24 @@ form.commitable_input input:focus {
     background-color: #ffffff;
 }
 
-.negative_balance {
-    color: darkred;
+.smaller {
+    font-size: smaller;
 }
 
 .sans_serif {
     font-family: 'Source Sans Pro', sans-serif;
+}
+
+.negative_balance {
+    color: darkred;
+}
+
+@-moz-document url-prefix() {
+    h2, h3, h4, h5 {
+        letter-spacing: -1px;
+    }
+
+    nav, th {
+        letter-spacing: -0.3px;
+    }    
 }
