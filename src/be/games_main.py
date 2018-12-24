@@ -1,5 +1,8 @@
 #!/usr/bin/env python2.7
 
+import sys
+sys.path = sys.path[1:]  # Do not resolve imports in this file's directory.
+
 import threading
 from base import grpc_util
 

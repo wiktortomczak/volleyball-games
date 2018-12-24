@@ -19,6 +19,7 @@ RUN apt-get install -y python python-pip
 RUN pip install python-gflags six
 RUN pip install grpcio futures pytz tzlocal pandas==0.19.0
 RUN pip install promise
+RUN pip install sendgrid
 
 # TODO: Build nginx binary linked to nginx/nginx.
 COPY prod/nginx /nginx/

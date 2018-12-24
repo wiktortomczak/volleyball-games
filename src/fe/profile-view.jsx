@@ -42,7 +42,8 @@ export default class ProfileSection extends React.Component {
            }} />
         <p>
           <input id="notify_if_new_game" type="checkbox"
-                 disabled={!player.hasEmail} checked={player.notifyIfNewGame}
+                 disabled={!player.hasEmail}
+                 checked={player.hasEmail && player.notifyIfNewGame}
                  onChange={() => player.update({notifyIfNewGame: !player.notifyIfNewGame})}
           />
           <label htmlFor="notify_if_new_game">
@@ -105,7 +106,7 @@ export default class ProfileSection extends React.Component {
           <tbody>
             {player.transactions.slice(0).reverse().map(transaction => {
               const details = (transaction.details instanceof Game)
-                ? <GameDescription game={transaction.details} type={'item'} />
+                ? <GameDescription game={transaction.details} type={'link'} />
                 : transaction.details;
               return (
                 <tr>

@@ -34,15 +34,10 @@ export default class IntroSection extends React.Component {
           <span className="important">Note:</span> This is work in progress.
         </p>
         <p>
-          The following does not work yet:
+          Not all web browsers are supported:
           <ul>
-            <li>Email notifications.</li>
-            <li>Support for any web browser.
-              <ul>
-                <li>Desktop: use Chrome 63+ or Firefox 52+</li>
-                <li>Mobile: &nbsp;use Chrome 50+ or TODO</li>
-              </ul>
-            </li>
+            <li>Desktop: use Chrome 63+ or Firefox 52+</li>
+            <li>Mobile: &nbsp;use Chrome 50+ or TODO</li>
           </ul>
           If you notice any technical problems, please let Wiktor know.<br/>
           (contact details at the bottom)

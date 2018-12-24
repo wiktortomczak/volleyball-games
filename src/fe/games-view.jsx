@@ -92,7 +92,7 @@ export default class GamesSection extends React.Component {
 
   _renderGame(game, upcomingOrEnded) {
     return (
-      <tr key={game.id}>
+      <tr key={game.id} id={game.id}>
         <td>
           {dateFormat.format(game.getStartTime())}<br/>
           {hourMinuteFormat.format(game.getStartTime())}{' - '}
@@ -130,7 +130,7 @@ export default class GamesSection extends React.Component {
       getEndTime: () => new Date(2000, 0, 0, 14)
     };
     return (
-      <tr key={gameBuilder.id}>
+      <tr key={gameBuilder.id} id={gameBuilder.id}>
         <td>
           <input type="text" className="date" defaultValue={gameBuilder.getDateStr()}
                  placeholder={dateFormat.format(Dates.now())}

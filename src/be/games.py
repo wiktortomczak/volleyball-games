@@ -13,6 +13,7 @@ from base.proto.sync import observable
 from src import vbreg_pb2
 from src import vbreg_pb2_grpc
 from src.be import config
+from src.be import email
 CONFIG = config.CONFIG
 
 gflags.DEFINE_string('games_data', None, 'TODO')
@@ -109,7 +110,11 @@ class Games(vbreg_pb2_grpc.GamesServicer):
     print '### GameAdd\n', request
     with self._games_data.HoldUpdates():
       with self._games_data_lock:
-        self._AddGame(_Game.FromRequest(request, self))
+        game = _Game.FromRequest(request, self)
+        self._AddGame(game)
+      for player in self._players.values():
+        if player.has_email and player.notify_if_new_game:
+          player.SendEmail_NewGame(game)
     return empty_message_pb2.EmptyMessage()
 
   def GameUpdate(self, request, context):
@@ -176,24 +181,36 @@ class _Player(object):
   def facebook_id(self):
     return self._proto.facebook_id
 
+  @property
+  def notify_if_new_game(self):
+    return self._proto.notify_if_new_game
+
   def Update(self, request):
     if request.HasField('email'):
       if request.email:
         self._proto.email = request.email
       else:
         self._proto.ClearField('email')
-        self._proto.notify_if_new_game = False
 
     if request.HasField('notify_if_new_game'):
-      self._proto.notify_if_new_game = request.notify_if_new_game
-    elif request.email:
-      self._proto.notify_if_new_game = True
+      if request.notify_if_new_game and self.has_email or (
+          not request.notify_if_new_game):
+        self._proto.notify_if_new_game = request.notify_if_new_game
 
     if request.HasField('iban'):
       if request.iban:
         self._proto.iban = request.iban
       else:
         self._proto.ClearField('iban')
+
+  @property
+  def has_email(self):
+    return self._proto.HasField('email')
+
+  @property
+  def email(self):
+    assert self._proto.HasField('email')
+    return self._proto.email
 
   def UpdateLastTouch(self):
     time_util.DateTimeToTimestampProto(time_util.now(), self._proto.last_touch)
@@ -251,6 +268,24 @@ class _Player(object):
       type=vbreg_pb2.Transaction.UNBLOCK,
       amount_pln=amount_pln,
       game={'id': game.id})
+
+  def SendEmail_NewGame(self, game):
+    subject = 'Game on %s is open for sign up' % (
+      _FormatDate(game.GetStartTime()))
+    content = 'Details and sign up: ' + game.GetUrlHTML()
+    email.SendEmailAsync(self.email, subject, content, 'text/html')
+
+  def SendEmail_AutoSignedUp(self, game):
+    subject = 'You have been signed up for the game on %s' % (
+      _FormatDate(game.GetStartTime()))
+    content = 'Details: ' + game.GetUrlHTML()
+    email.SendEmailAsync(self.email, subject, content)
+
+  def SendEmail_PlaceFree(self, game):
+    subject = 'The game on %s has a free place' % (
+      _FormatDate(game.GetStartTime()))
+    content = 'Details and sign up: ' + game.GetUrlHTML()
+    email.SendEmailAsync(self.email, subject, content)
 
   @classmethod
   def _GenerateBankTransferId(cls, name, games):
@@ -350,6 +385,13 @@ class _Game(object):
   def has_free_place(self):
     return len(self._signed_up_players) < self._proto.max_signed_up
 
+  @property
+  def url(self):
+    return '%s/games#%s' % (CONFIG.site_url, self.id)
+
+  def GetUrlHTML(self):
+    return '<a href="%s">%s</a>' % (self.url, self.url)
+
   def GetCancelationFee(self):
     num_days_before_game = int(
       max((self.GetStartTime() - time_util.now()).total_seconds(), 0) /
@@ -400,9 +442,9 @@ class _Game(object):
     if is_price_pln_changed:
       self._proto.price_pln = request.price_pln
     if request.HasField('max_signed_up'):
+      had_free_place = self.has_free_place
       self._proto.max_signed_up = request.max_signed_up
-      while self._waiting_players and self.has_free_place:
-        self._SignUpNextWaitingPlayer()
+      self._HandleFreePlacesIfAny(had_free_place)
 
   def Cancel(self):
     for player in self._signed_up_players:
@@ -421,10 +463,11 @@ class _Game(object):
     assert self.is_upcoming
     is_player_signed_up = player in self._signed_up_players
     is_player_waiting = player in self._waiting_players
+    has_free_place = self.has_free_place
 
     if is_signed_up:
       assert not (is_player_signed_up or is_player_waiting)
-      if len(self._signed_up_players) < self.max_signed_up:
+      if has_free_place:
         self._signed_up_players.append(player)
         self._proto.signed_up.add(facebook_id=player.facebook_id)
         player.Pay(self.price_pln, self)
@@ -432,6 +475,9 @@ class _Game(object):
         self._waiting_players.append(player)
         self._proto.waiting.add(facebook_id=player.facebook_id)
         player.Block(self.price_pln, self)
+      if player in self._players_to_notify_if_place_free:
+        self._players_to_notify_if_place_free.remove(player)
+        self._PlayerRefListPop(self._proto.to_notify_if_place_free, player)
 
     else:  # not is_signed_up
       assert is_player_signed_up or is_player_waiting
@@ -439,14 +485,18 @@ class _Game(object):
         self._signed_up_players.remove(player)
         self._PlayerRefListPop(self._proto.signed_up, player)
         player.Return(self.price_pln - self.GetCancelationFee(), self)
-        if self._waiting_players:
-          self._SignUpNextWaitingPlayer()
-        else:
-          pass  # TODO: notify to_notify_if_place_free if they are not signed up
+        self._HandleFreePlacesIfAny(has_free_place)
       else:  # is_player_waiting
         self._waiting_players.remove(player)
         self._PlayerRefListPop(self._proto.waiting, player)
         player.Unblock(self.price_pln, self)
+
+  def _HandleFreePlacesIfAny(self, had_free_place):
+    while self.has_free_place and self._waiting_players:
+      self._SignUpNextWaitingPlayer()
+    if self.has_free_place and not had_free_place:
+      for player_to_notify in self._players_to_notify_if_place_free:
+        player_to_notify.SendEmail_PlaceFree(self)      
 
   def _SignUpNextWaitingPlayer(self):
     waiting_player = self._waiting_players.pop(0)
@@ -455,7 +505,8 @@ class _Game(object):
     self._proto.signed_up.add().MergeFrom(waiting_player_ref._message)
     waiting_player.Unblock(self.price_pln, self)
     waiting_player.Pay(self.price_pln, self)
-    # TODO: notify waiting_player
+    if waiting_player.has_email:
+      waiting_player.SendEmail_AutoSignedUp(self)
 
   def SetNotifyPlayerIfPlaceFree(self, player, should_notify):
     if should_notify:
@@ -502,7 +553,14 @@ class UserVisibleException(Exception):
     self.user_message = user_message
 
 
-observable.GenerateObservableClass(vbreg_pb2.GamesData, None)
+
+def _FormatDate(dt):
+  # TODO: Locale-specific.
+  return time_util.DateTimeToFormatStr(dt, '%d.%m.%Y')
 
 
 _NUM_SECONDS_IN_DAY = 60 * 60 * 24
+
+
+observable.GenerateObservableClass(vbreg_pb2.GamesData, None)
+

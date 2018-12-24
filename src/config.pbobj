@@ -1,8 +1,9 @@
 {
-  "version": "v0.3.1",
+  "version": "v0.4",
+  "siteUrl": "https://volleyball-warsaw.tk",
   "cancelationFeeRuleList": [
     {"minDays": 3, "fraction": 0}, 
     {"minDays": 1, "maxDays": 3, "fraction": 0.16}, 
     {"minDays": 0, "maxDays": 1, "fraction": 0.5}
-  ]
+  ],
 }
