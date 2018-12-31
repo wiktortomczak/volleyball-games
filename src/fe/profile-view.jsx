@@ -13,6 +13,16 @@ import {GameDescription} from 'fe/game';
 import Model, {Game} from 'fe/model';
 
 
+/**
+ * Renders player's profile:
+ *  - email settings: email address, notification settings
+ *  - payments account summary:
+ *      balance, free balance, total deposited, total paid, total blocked
+ *  - bank settings: account number, a button to withdraw money
+ *  - transaction history
+ *
+ * Profile view of the Volleyball Games JS web app.
+ */
 export default class ProfileSection extends React.Component {
 
   _getPlayer(opt_props, opt_context) {
@@ -32,7 +42,7 @@ export default class ProfileSection extends React.Component {
         <h3>{!!this.props.player && this.props.player.name + '\'s '}Profile</h3>
         <CommitableInput
            type="email" label="E-mail" size="30"
-           value={(props, context) => this._getPlayer(props, context).email}
+           value={props => this._getPlayer(props).email}
            onCommit={email => {
              if (email != this._getPlayer().email) {
                this._getPlayer().update({email}).then(() => (
@@ -84,7 +94,7 @@ export default class ProfileSection extends React.Component {
         <CommitableInput
           type="text" label="IBAN" title="Provide 26-digit IBAN"
           size="30" minLength="26" maxLength="26" pattern="[0-9]{26}"
-          value={(props, context) => this._getPlayer(props, context).IBAN}
+          value={props => this._getPlayer(props).IBAN}
           onCommit={iban => {
             if (iban != this._getPlayer().IBAN) {
               this._getPlayer().update({iban}).then(() => (

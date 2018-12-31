@@ -17,6 +17,11 @@ import PlayersSection from 'fe/players-view';
 import ProfileSection from 'fe/profile-view';
 
 
+/**
+ * View part of Volleyball Games JS web app. The app's user interface,
+ * in-browser. Visualizes the model through a number of views (games, players,
+ * etc.) as HTML DOM. Implemented with React.
+ */
 class _View extends React.Component {
 
   static createAndRender(model, opt_authButtonFactory) {

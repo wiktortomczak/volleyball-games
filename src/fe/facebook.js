@@ -1,3 +1,4 @@
+// Facebook-related code.
 
 import FB from 'fb';
 import Observable from 'base/js/observable';
@@ -6,6 +7,7 @@ import feConfig from 'fe/fe-config.js';
 
 
 /**
+ * Authenticates users using Facebook login.
  * @implements {Auth}
  */
 export class FacebookAuth extends Observable {
@@ -71,6 +73,10 @@ export class FacebookAuth extends Observable {
 }
 
 
+/**
+ * Identity of a user logged in via Facebook login.
+ * Includes Facebook access token for accessing Facebook on user's behalf.
+ */
 export class FacebookCredentials {
 
   static fromAuthResponse(authResponse) {
@@ -96,6 +102,9 @@ export class FacebookCredentials {
 }
 
 
+/**
+ * Facebook-related helpers.
+ */ 
 export class FacebookUtil {
 
   static getUserName(facebookId) {

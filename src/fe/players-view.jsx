@@ -9,6 +9,15 @@ import {dateTimeFormat, PLNshort} from 'fe/formatting';
 import Model, {Game} from 'fe/model';
 
 
+/**
+ * Renders registered players. A table with one player per row:
+ * picture and name. In admin mode, renders additional columns:
+ *  - balance in player's payments account
+ *  - a form to credit the player's account (eg. after receiving cash)
+ *  - last login
+ *
+ * Players view of the Volleyball Games JS web app. 
+ */
 export default class PlayerSection extends React.Component {
 
   get _model() {
@@ -98,8 +107,6 @@ PlayerRow.contextTypes = {
 };
 
 
-
-
 export class PlayerImage extends React.Component {
 
   get _player() {
@@ -124,7 +131,6 @@ export class PlayerImage extends React.Component {
     );
   }
 }
-
 
 
 export class Balance extends React.Component {

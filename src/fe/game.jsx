@@ -1,3 +1,4 @@
+// Rendering of a Game entity.
 
 import React from 'react';
 import {HashLink} from 'third_party/react-router-hash-link@1.2.1/index.js';
@@ -5,6 +6,9 @@ import {HashLink} from 'third_party/react-router-hash-link@1.2.1/index.js';
 import {dateFormat} from 'fe/formatting';
 
 
+/**
+ * Short game description, a text item.
+ */
 export class GameDescription extends React.Component {
 
   get _game() {

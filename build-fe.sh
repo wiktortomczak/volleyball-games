@@ -1,4 +1,9 @@
 #!/bin/bash
+# Compiles and bundles frontend JS code into a single file
+# to be run in a browser:
+# build/fe/vbreg.bin.js or build/fe/testing/vbreg-test.bin.js
+# TODO: Use Closure compiler features: minify, type-check, etc.
+# TODO: Replace with BUILD rule(s).
 
 set -euo pipefail
 
@@ -119,5 +124,3 @@ for vbreg in $@; do
     --extern_module=npm:fb:src/fe/fb.externs.js  \
     --extern_module=npm:dialog-polyfill:src/fe/dialog-polyfill.externs.js
 done
-
-

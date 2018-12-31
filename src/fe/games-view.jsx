@@ -16,6 +16,18 @@ import Model, {Game, GameBuilder} from 'fe/model';
 import {PlayerImage} from 'fe/players-view';
 
 
+/**
+ * Renders upcoming and past games, in two tables, one row per game. Columns:
+ *  - date & time
+ *  - location
+ *  - facebook event
+ *  - price per player
+ *  - players: signed up, waiting list, number of places left / total
+ *  - actions: (player mode) sign up / cancel, notify if a place is free
+ *             (admin  mode) edit / remove game; add game
+ *
+ * Games view of the Volleyball Games JS web app. 
+ */
 export default class GamesSection extends React.Component {
 
   constructor(props, context) {
@@ -36,11 +48,12 @@ export default class GamesSection extends React.Component {
   }
 
   render() {
-    // TODO: This should be in getDerivedStateFromProps
+    // TODO: This should be in getDerivedStateFromProps()
     // if it could read next context.
     if (!this._model.isAdminMode && this.state.gameBuilder) {
       this.setState({gameBuilder: null});
     }
+
     return (
       <section id="games">
         <h3>Upcoming games</h3>

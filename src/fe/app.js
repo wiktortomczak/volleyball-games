@@ -3,6 +3,9 @@ import Model from 'fe/model';
 import View from 'fe/view';
 
 
+/**
+ * Top-level class of Volleyball Games JS web app. Model + view.
+ */
 export default class App {
   
   static create() {

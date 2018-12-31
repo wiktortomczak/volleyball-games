@@ -1,3 +1,5 @@
+# Compile-time configuration, shared between frontend and backend.
+
 {
   "version": "v0.4",
   "siteUrl": "https://volleyball-warsaw.tk",

@@ -5,6 +5,10 @@ import {PLNshort, percentShort} from 'fe/formatting';
 import {Game} from 'fe/model';
 
 
+/**
+ * Renders a table listing cancellation fees, applicable when a player cancels
+ * their participation in a game.
+ */
 export default class CancelationFees extends React.Component {
 
   get _game() {
@@ -43,8 +47,8 @@ export default class CancelationFees extends React.Component {
         })}
       </table>,
       !this._game &&
-        <p>Fees are rounded to the nearest 1 PLN,
-      eg. 3,4 PLN &rarr; 3 PLN, 3,5 PLN &rarr; 4 PLN.
+      <p>Fees are rounded to the nearest 1 PLN,
+        eg. 3,4 PLN &rarr; 3 PLN, 3,5 PLN &rarr; 4 PLN.
       </p>
     ];
   }

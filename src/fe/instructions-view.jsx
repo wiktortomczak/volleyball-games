@@ -8,6 +8,11 @@ import CancelationFees from 'fe/cancelation-fees';
 import Model from 'fe/model';
 
 
+/**
+ * Renders website (app) instructions for the user.
+ *
+ * Instructions view of the Volleyball Games JS web app. 
+ */
 export default class InstructionsSection extends React.Component {
 
   _getUser() {

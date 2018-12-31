@@ -1,3 +1,5 @@
+// Formatting code, for nicely rendering dates, money sums, etc. as text.
+
 /* global Intl */
 
 export const PLN = new Intl.NumberFormat('pl-PL', {

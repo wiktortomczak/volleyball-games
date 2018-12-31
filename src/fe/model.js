@@ -29,6 +29,12 @@ import {FacebookAuth, FacebookUtil} from 'fe/facebook';
 import feConfig from 'fe/fe-config.js';
 
 
+/**
+ * Model part of volleyball Games JS web app:
+ *  - View of backend (API) data. Read-only, automatically sync'ed in real time.
+ *  - API calls, for changing API data
+ *  - JS web app state
+ */
 export default class Model extends Observable {
   
   static create() {

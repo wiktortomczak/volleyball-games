@@ -1,3 +1,5 @@
+// Frontend <-> backend interface.
+// Public data model and API (backend interface) definition
 
 syntax = "proto2";
 
@@ -14,7 +16,6 @@ service Games {
     returns (EmptyMessage) {}
   // TODO: PlayerPaymentTransactionRemove.
   // TODO: PlayerPaymentTransactionUpdate.
-  // TODO: Remove PlayerDeposit.
   rpc GameAdd(GameAddRequest) returns (EmptyMessage) {}  // TODO: role=admin.
   rpc GameUpdate(GameUpdateRequest)
     returns (EmptyMessage) {}  // TODO: role=admin.
@@ -187,6 +188,7 @@ message CancelationFeeRule {
   optional double fraction = 3;
 }
 
+// TODO: Move to frontend / remove.
 message CancelationFee {
   optional int64 min_days = 1;
   optional int64 max_days = 2;

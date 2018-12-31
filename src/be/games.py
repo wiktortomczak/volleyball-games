@@ -1,3 +1,4 @@
+"""gRPC Games service implementation."""
 
 import Queue
 import threading
@@ -16,11 +17,15 @@ from src.be import config
 from src.be import email
 CONFIG = config.CONFIG
 
-gflags.DEFINE_string('games_data', None, 'TODO')
+gflags.DEFINE_string(
+  'games_data', None,
+  'Path to file where Games service data is persisted. '
+  'GamesData proto in text format.')
 FLAGS = gflags.FLAGS
 
 
 class Games(vbreg_pb2_grpc.GamesServicer):
+  """gRPC Games service implementation."""
 
   @classmethod
   def Create(cls):
@@ -547,6 +552,12 @@ class _Game(object):
 
 
 class UserVisibleException(Exception):
+  """An exception with user-understandable message.
+
+  The message is suitable for displaying in the UI. It refers to user-level
+  concepts (games, sign ups, etc.) rather than low-level technical concepts
+  (eg. software details).
+  """
 
   def __init__(self, user_message):
     Exception.__init__(self, 'UserVisibleException: ' + user_message)

@@ -2,17 +2,35 @@
 
 import React from 'react';
 
+
+/**
+ * Renders 'Log in with Facebook' and 'Log out' buttons with Facebook styling.
+ * Injectable factory of {@code ReactElement}s.
+ */
 export class FacebookAuthButtonFactory {
 
+  /**
+   * @param {!Auth} auth Authentication provider.
+   * @param {!Object} props {@code FacebookLoginLogoutButton} component props.
+   * @return {!ReactElement}
+   */
   static renderLoginButton(auth, props) {
     return <FacebookLoginLogoutButton auth={auth} {...props} />;
   }
 
+  /**
+   * @param {!Auth} auth Authentication provider.
+   * @param {!Object} props {@code FacebookLoginLogoutButton} component props.
+   * @return {!ReactElement}
+   */
   static renderLogoutButton(auth, props) {
     return <FacebookLoginLogoutButton auth={auth} {...props} />;
   }
 }
 
+/**
+ * Either of 'Log in with Facebook' and 'Log out' buttons with Facebook styling.
+ */ 
 class FacebookLoginLogoutButton extends React.Component {
 
   constructor(props) {

@@ -5,6 +5,11 @@ import React from 'react';
 import Model from 'fe/model';
 
 
+/**
+ * Renders intro (landing) page.
+ *
+ * Intro view of the Volleyball Games JS web app. 
+ */
 export default class IntroSection extends React.Component {
 
   get _auth() {

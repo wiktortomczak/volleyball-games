@@ -1,3 +1,4 @@
+"""Automated email sending."""
 
 import sendgrid
 from sendgrid.helpers import mail
