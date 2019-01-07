@@ -174,7 +174,7 @@ in your account that you should cover as soon as possible, by depositing money.
           To deposit money in your account, make a bank transfer to:
           <ul>
             <li>beneficiary: Boris Anisimov</li>
-            <li>bank account (IBAN): 11 2222 3333 4444 5555 6666 7777</li>
+            <li>bank account (IBAN): 82 1160 2202 0000 0003 3172 8367</li>
             <li>title: volleyball {user.bankTransferId}</li>
           </ul>
         </p>
