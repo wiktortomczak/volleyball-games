@@ -1,5 +1,3 @@
-# Compile-time configuration, shared between frontend and backend.
-
 {
   "version": "v0.4",
   "siteUrl": "https://volleyball-warsaw.tk",
@@ -7,5 +5,5 @@
     {"minDays": 3, "fraction": 0}, 
     {"minDays": 1, "maxDays": 3, "fraction": 0.16}, 
     {"minDays": 0, "maxDays": 1, "fraction": 0.5}
-  ],
+  ]
 }
