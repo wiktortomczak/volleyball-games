@@ -27,7 +27,7 @@ export default class IntroSection extends React.Component {
         </p>
         <p>
           <a href="https://facebook.com/groups/307483076649700/">
-            <img src="facebook-20x20.png" width="20" heigth="20" />
+            <img src="facebook-20x20.png" width="20" height="20" />
             Volleyball in Warsaw<br/>
           </a> Check it out for latest news.
         </p>
