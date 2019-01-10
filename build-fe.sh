@@ -63,7 +63,6 @@ JSX=(
   src/fe/profile-view.jsx
   src/fe/view.jsx
   src/fe/testing/mock-auth-view.jsx
-  third_party/react-router-hash-link@1.2.1/index.jsx
 )
 for jsx in ${JSX[@]}; do
   js=build/${jsx#src/}  # Strip src/ prefix if such, prefix with build/.

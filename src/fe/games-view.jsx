@@ -1,10 +1,10 @@
 /* global goog */
 /* global proto */
 
+import dialogPolyfill from 'dialog-polyfill';
 import PropTypes from 'prop-types';
 import React from 'react';
-import {HashLink} from 'third_party/react-router-hash-link@1.2.1/index.js';
-import dialogPolyfill from 'dialog-polyfill'
+import {Link} from 'react-router-dom';
 
 import {Dates} from 'base/js/time';
 
@@ -332,7 +332,7 @@ class SignUpConfirmation extends ModalDialog {
              <li>You deposit the missing {PLNshort.format(missingBalancePln)}{' '}
                  in your account now.{' '}
                <span className="smaller">
-                 (<HashLink to="/instructions#deposits">instructions</HashLink>)
+                 (<Link to="/instructions#deposits">instructions</Link>)
                </span>
              </li>}
             <li>In case you need to cancel, a cancelation fee is deducted

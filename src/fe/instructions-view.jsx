@@ -2,7 +2,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import {Link} from 'react-router-dom';
-import {HashLink} from 'third_party/react-router-hash-link@1.2.1/index.js';
 
 import CancelationFees from 'fe/cancelation-fees';
 import Loading from 'fe/loading';
@@ -37,7 +36,7 @@ for any <Link to="/games">upcoming games</Link>. Click on the{' '}
         <p>
 Please keep in mind that this is binding: by signing up you declare to
 participate in the game and you pay. You can still{' '}
-<HashLink to="#cancelation">cancel</HashLink> if you need to.
+<Link to="#cancelation">cancel</Link> if you need to.
         </p>
 
         <h5>No free places</h5>
@@ -55,7 +54,7 @@ sign-up time.
             <p>
 This is binding. The moment you are automatically signed up, it is just like
 regular sign-up. You declare to participate in the game and you pay. You can
-still <HashLink to="#cancelation">cancel</HashLink> if you need to.
+still <Link to="#cancelation">cancel</Link> if you need to.
             </p>
             <p>
 While on the waiting list and not signed up for the game yet, you can cancel
@@ -78,8 +77,8 @@ is empty. Also, another notified player might sign up for the place before you.
         <h4 id="cancelation">Cancelation</h4>
         <p>
 If you need to cancel, the amount you paid for the game is returned to your{' '}
-<HashLink to="#payments">account</HashLink>. However, a cancelation fee might
-be deducted, depending on how many days before the game you cancel:
+<Link to="#payments">account</Link>. However, a cancelation fee might be deducted,
+depending on how many days before the game you cancel:
         </p>
         <p>
           <CancelationFees />
@@ -111,7 +110,7 @@ is your dedicated payments account, that is, money that you deposit in the accou
 and that is automatically managed to pay for your games.
         </p>
         <p>
-You need to periodically <HashLink to="#deposits">deposit money</HashLink> in your account.
+You need to periodically <Link to="#deposits">deposit money</Link> in your account.
 The rest is taken care of for you.
         </p>
         <p>
@@ -127,8 +126,8 @@ A transaction can be any of the following:
           <tr>
             <th>DEPOSIT</th>
             <td>
-When you <HashLink to="#deposits">deposit money</HashLink>, the money is added to
-your account.
+When you <Link to="#deposits">deposit money</Link>, the money is added to your
+account.
             </td>
           </tr>
           <tr>
@@ -142,7 +141,7 @@ from your account.
             <th>RETURN</th>
             <td>
 When you cancel a game, the game's price is returned to your account.
-A <HashLink to="#cancelation">cancelation fee</HashLink>{' '} might be deducted.
+A <Link to="#cancelation">cancelation fee</Link>{' '} might be deducted.
             </td>
           </tr>
           <tr>

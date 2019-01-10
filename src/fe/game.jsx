@@ -1,7 +1,7 @@
 // Rendering of a Game entity.
 
 import React from 'react';
-import {HashLink} from 'third_party/react-router-hash-link@1.2.1/index.js';
+import {Link} from 'react-router-dom';
 
 import {dateFormat} from 'fe/formatting';
 
@@ -28,7 +28,7 @@ export class GameDescription extends React.Component {
   }
 
   _link(text) {
-    return <HashLink to={`/games#${this._game.id}`}>{text}</HashLink>;
+    return <Link to={`/games#${this._game.id}`}>{text}</Link>;
   }
 
   _text(text) {

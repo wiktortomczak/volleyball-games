@@ -421,10 +421,6 @@ section#games td > input[type="button"] + input[type="button"] {
     margin-top: 5px;
 }
 
-section#games tr:target {
-    background-color: #feca1f;
-}
-
 section#games .positive_balance {
     color: green;
 }
@@ -507,6 +503,10 @@ form.commitable_input input:focus {
 
 .negative_balance {
     color: darkred;
+}
+
+:target {
+    background-color: #feca1f;
 }
 
 @-moz-document url-prefix() {

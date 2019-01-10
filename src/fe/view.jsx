@@ -42,7 +42,12 @@ class _View extends React.Component {
 
     // TODO: Register onChange callbacks in componentDidMount?
     // And deregister in componentWillUnmount?
-    this._model.onChange(() => this.forceUpdate());
+    this._model.onChange(() => {
+      this.forceUpdate();
+      // TODO: This should be called on every DOM change.
+      // Some DOM changes are done elsewhere (eg. via setState()).
+      elementNavigator.notifyDocumentChange();
+    });
     // Redirect logged-in user to Games view by default
     // (if browser location not set to other specific view).
     this._model.auth.onChange(() => {
@@ -75,6 +80,18 @@ class _View extends React.Component {
   _closeModal(modalElement) {
     this.setState(state => (
       {modals: Arrays.remove(state.modals, modalElement)}));
+  }
+
+  /**
+   * Navigates to element indicated in current url. Globally, for all views.
+   * @override
+   */
+  componentDidMount() {
+    // Initial page load.
+    elementNavigator.navigateToElement(this.props.location);
+    // Every subsequent router location change (<Link> click).
+    this.props.history.listen(location => (
+      elementNavigator.navigateToElement(location)));
   }
 
   /**
@@ -252,3 +269,44 @@ _View.childContextTypes = {
 const View = withRouter(_View);
 
 export default View;
+
+
+/**
+ * Navigates (scrolls) to element given in location. Handles delayed element
+ * rendering (if the element is rendered after {@code navigateToElement()}
+ * is called).
+ *
+ * @see github.com/ReactTraining/react-router/issues/394#issuecomment-128148470
+ */
+const elementNavigator = new (class ElementNavigator {
+
+  constructor() {
+    this._elementId = null;  // DOM element to scroll to.
+  }
+
+  navigateToElement(location) {
+    if (location.hash) {
+      this._elementId = location.hash.substr(1);
+      this._tryNavigateToElement();
+    } else {
+      this._elementId = null;
+    }
+  }
+
+  _tryNavigateToElement() {
+    const el = document.getElementById(this._elementId);
+    if (el) {
+      el.scrollIntoView();
+      // Trigger :target selector. TODO: Fix.
+      // github.com/ReactTraining/history/issues/503
+      window.location.hash = '#' + this._elementId;
+      this._elementId = null;
+    }
+  }
+
+  notifyDocumentChange() {
+    if (this._elementId) {
+      this._tryNavigateToElement();
+    }
+  }
+});
