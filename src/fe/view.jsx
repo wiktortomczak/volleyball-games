@@ -12,6 +12,8 @@ import GamesSection from 'fe/games-view';
 import {FacebookAuthButtonFactory} from 'fe/facebook-view';
 import InstructionsSection from 'fe/instructions-view';
 import IntroSection from 'fe/intro-view';
+import LoggedInRoute from 'fe/logged-in-route';
+import LogInRequiredSection from 'fe/login-required';
 import Model from 'fe/model';
 import PlayersSection from 'fe/players-view';
 import ProfileSection from 'fe/profile-view';
@@ -36,10 +38,19 @@ class _View extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = {
-      modals: [],
-      hasUserCredentials: !!this._model.auth.userCredentials
-    };
+    this.state = {modals: []};
+
+    // TODO: Register onChange callbacks in componentDidMount?
+    // And deregister in componentWillUnmount?
+    this._model.onChange(() => this.forceUpdate());
+    // Redirect logged-in user to Games view by default
+    // (if browser location not set to other specific view).
+    this._model.auth.onChange(() => {
+      if (this._model.auth.userCredentials
+          && this.props.location.pathname == '/') {
+        this.props.history.push('/games');
+      }
+    });
   }
 
   get _model() {
@@ -66,6 +77,9 @@ class _View extends React.Component {
       {modals: Arrays.remove(state.modals, modalElement)}));
   }
 
+  /**
+   * @override
+   */
   componentWillUpdate(nextProps) {
     nextProps.model.notifications.forEach(notification => {
       if (notification.type == 'success') {
@@ -76,21 +90,9 @@ class _View extends React.Component {
     });
   }
 
-  componentDidMount() {
-    // TODO: Remove the onChange callback in componentWillUnmount.
-    this._model.onChange(() => {
-      const nextHasUserCredentials = !!this._model.auth.userCredentials;
-      if (this.state.hasUserCredentials != nextHasUserCredentials) {
-        this.setState(state => ({hasUserCredentials: nextHasUserCredentials}));
-        if (nextHasUserCredentials) {
-          this.props.history.push('/games');
-        }
-      } else {
-        this.forceUpdate();
-      }
-    });
-  }
-
+  /**
+   * @override
+   */
   render() {
     return [
       this._renderNav(),
@@ -148,7 +150,7 @@ class _View extends React.Component {
          </NavLink></div>}
         <h2>Volleyball in Warsaw<span>: game registration</span>
           <a href="https://facebook.com/groups/307483076649700/">
-            <img src="facebook-20x20.png" width="20" heigth="20" />
+            <img src="facebook-20x20.png" width="20" height="20" />
           </a>
         </h2>
       </header>
@@ -170,19 +172,21 @@ class _View extends React.Component {
   _renderSection() {
     return (
       <Switch>
-         <Route exact path='/' component={IntroSection} />
-         {this._model.auth.userCredentials && [
-            <Route exact path='/instructions' component={InstructionsSection} />,
-            <Route exact path='/games' component={GamesSection} />,
-            <Route exact path='/players' component={PlayersSection} />,
-            <Route exact path='/profile' component={ProfileSection} />,
-            this._model.isAdminMode &&
-            <Route path='/profile/:id' render={({match}) => (
-              <ProfileSection player={this._model.players.get(match.params.id)} />
-            )} />
-         ]}
-         <Route><Redirect to='/' /></Route>
-       </Switch>
+        <Route exact path='/' component={IntroSection} />
+        <LoggedInRoute exact path='/instructions' component={InstructionsSection}
+          loggedOutComponent={LogInRequiredSection} />
+        <LoggedInRoute exact path='/games' component={GamesSection} 
+          loggedOutComponent={LogInRequiredSection} />
+        <LoggedInRoute exact path='/players' component={PlayersSection}
+          loggedOutComponent={LogInRequiredSection} />
+        <LoggedInRoute exact path='/profile' component={ProfileSection}
+          loggedOutComponent={LogInRequiredSection} />
+        this._model.isAdminMode &&
+        <Route path='/profile/:id' render={({match}) => (
+          <ProfileSection player={this._model.players.get(match.params.id)} />
+        )} />
+        <Route><Redirect to='/' /></Route>
+      </Switch>
     );
   }
 
