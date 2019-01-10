@@ -77,9 +77,13 @@ export default class Model extends Observable {
     return this._isAdminMode;
   }
 
-  getUser() {
-    goog.asserts.assert(this._hasGamesData);
-    return this._players.get(this._auth.userCredentials.facebookId);
+  getUser(opt_allowNull) {
+    if (this._hasGamesData) {
+      return this._players.get(this._auth.userCredentials.facebookId);
+    } else {
+      goog.asserts.assert(opt_allowNull);
+      return null;
+    }
   }
 
   get players() {

@@ -55,6 +55,7 @@ JSX=(
   src/fe/games-view.jsx
   src/fe/instructions-view.jsx
   src/fe/intro-view.jsx
+  src/fe/loading.jsx
   src/fe/modal-dialog.jsx
   src/fe/players-view.jsx
   src/fe/profile-view.jsx

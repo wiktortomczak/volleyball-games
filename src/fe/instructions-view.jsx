@@ -5,6 +5,7 @@ import {Link} from 'react-router-dom';
 import {HashLink} from 'third_party/react-router-hash-link@1.2.1/index.js';
 
 import CancelationFees from 'fe/cancelation-fees';
+import Loading from 'fe/loading';
 import Model from 'fe/model';
 
 
@@ -16,7 +17,7 @@ import Model from 'fe/model';
 export default class InstructionsSection extends React.Component {
 
   _getUser() {
-    return this.context.model.getUser();
+    return this.context.model.getUser(true /* allowNull */);
   }
 
   render() {
@@ -180,13 +181,13 @@ in your account that you should cover as soon as possible, by depositing money.
           <ul>
             <li>beneficiary: Boris Anisimov</li>
             <li>bank account (IBAN): 82 1160 2202 0000 0003 3172 8367</li>
-            <li>title: volleyball {user.bankTransferId}</li>
+            <li>title: volleyball {user ? user.bankTransferId : <Loading />}</li>
           </ul>
         </p>
         <p>
 <span className="important">Note:</span>{' '}
 Please make sure that the title of your bank transfer starts exactly with these
-two words: "volleyball {user.bankTransferId}".
+two words: "volleyball {user ? user.bankTransferId : <Loading />}".
         </p>
         <p>
 The transferred amount is added to your account:
