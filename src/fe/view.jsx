@@ -213,7 +213,9 @@ class _View extends React.Component {
         <label>Contact:</label>
         <span>
           <img src="volleyball-20x20.png" width="20" height="20" />{' '}
-          volleyball: Boris <a href="#">messenger</a> | <a href="#">email</a>
+          volleyball: Boris{' '}
+          <a href="https://www.messenger.com/t/borisVanisimov">messenger</a>{' | '}
+          <a href={'mailto:borisuu' + '@gmail.com'}>email</a>
         </span>
         <span>
           <img src="coding-40x20.gif" width="40" height="20" />{' '}
