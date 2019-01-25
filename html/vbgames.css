@@ -442,11 +442,7 @@ section#profile input[type="button"] {
 }
 
 @media (max-width: 700px) {
-    section#games table {
-        display: block;
-    }
     section#games tr {
-        display: block;
         border-bottom: 1px solid black;
         margin: 0.5em 0em;
     }
@@ -454,7 +450,7 @@ section#profile input[type="button"] {
         display: none;
     }
     section#games td {
-        display: block;
+        display: block !important;
         border: 0;
         padding: 0;
         margin-top: 5px;
