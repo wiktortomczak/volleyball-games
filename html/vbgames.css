@@ -53,7 +53,7 @@ nav div, nav button, nav hr + button + hr {
         display: none;
     }
     
-    nav:active, #show_nav:focus ~ nav {
+    #show_nav:focus ~ nav, #show_nav:active ~ nav, nav:active {
         display: initial;
         left: initial;
         right: 0px;
@@ -65,15 +65,9 @@ nav div, nav button, nav hr + button + hr {
         position: absolute;
         top: 2px;
         right: 10px;
-        width: 32px;
-        height: 32px;
-        background: url(menu-32x32.png) no-repeat;
-        border: 0;
-        padding: 0;
     }
 
     #show_nav:focus {
-        background: url(menu-pressed-32x32.png) no-repeat;
         outline: none;
     }
 

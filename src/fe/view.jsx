@@ -123,7 +123,7 @@ class _View extends React.Component {
 
   _renderNav() {
     return [
-      <button id="show_nav"></button>,
+      <img id="show_nav" src="menu-32x32.png" width="32" height="32" tabIndex="0" />,
       <nav>
         <NavLink to="/" exact activeClassName='active'>
           Intro
