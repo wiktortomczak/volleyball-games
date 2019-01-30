@@ -10,6 +10,7 @@ import ProtoEnum from 'base/js/proto/enum';
 import CommitableInput from 'fe/commitable-input';
 import {dateTimeFormat, PLN} from 'fe/formatting';
 import {GameDescription} from 'fe/game';
+import Loading from 'fe/loading';
 import Model, {Game} from 'fe/model';
 
 
@@ -37,6 +38,10 @@ export default class ProfileSection extends React.Component {
 
   render() {
     const player = this._getPlayer();
+    if (!player) {
+      return <Loading />;
+    }
+
     return (
       <section id="profile">
         <h3>{!!this.props.player && this.props.player.name + '\'s '}Profile</h3>
