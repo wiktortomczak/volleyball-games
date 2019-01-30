@@ -42,6 +42,7 @@ export class FacebookAuth extends Observable {
 
   /** @override */
   logout() {
+    // This does not work on localhost: stackoverflow.com/a/46730648/2131969
     FB.logout();  // Triggers authResponseChange.
   }
 

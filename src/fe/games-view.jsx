@@ -196,8 +196,8 @@ export default class GamesSection extends React.Component {
   }
 
   _renderGameActions(game) {
-    const user = this._getUser();
     if (!this._model.isAdminMode) {
+      const user = this._getUser();
       if (!game.isPlayerSignedUpOrWaiting(user)) {
         const actions = [
           <input type="button" value="Sign up" onClick={() => {

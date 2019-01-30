@@ -191,7 +191,7 @@ export default class Model extends Observable {
       proto.StreamDataRequest.fromObject({
         facebookId: userCredentials.facebookId}));
     this._addWaitingForServerDataWarning();
-    let hasData = false;
+    let hasData = false;  // TODO: Redundant with this._hasGamesData?
     gamesDataStream.on('data', gamesData => {
       hasData = true;
       this._removeWaitingForServerDataWarning();

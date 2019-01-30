@@ -175,6 +175,7 @@ class _View extends React.Component {
   }
 
   _renderAdminModeCheckbox() {
+    // TODO: Render <Loading /> if !hasGamesData.
     const user = this._model.hasGamesData ? this._model.getUser() : null;
      return user && user.isAdmin
        ? <div>
