@@ -58,9 +58,9 @@ export default class Model extends Observable {
 
     this._isAdminMode = false;
 
-    this._setGamesClientFromUserCredentials(auth.userCredentials);
+    this._setUserCredentials(auth.userCredentials);
     auth.onChange(() => {
-      this._setGamesClientFromUserCredentials(auth.userCredentials);
+      this._setUserCredentials(auth.userCredentials);
       this._notifyChanged();
     });
   }
@@ -164,16 +164,10 @@ export default class Model extends Observable {
     this._notifyChanged();
   }
   
-  _setGamesClientFromUserCredentials(userCredentials) {
-    if (userCredentials) {
-      this._connectToGamesService(userCredentials);
-    } else {
-      // TODO: Cancel active gamesClient RPCs.
-      this._gamesClient = null;
-      this._hasGamesData = false;
-      this._players.clear();
-      this._games.clear();
-    }
+  _setUserCredentials(userCredentials) {
+    userCredentials
+      ? this._connectToGamesService(userCredentials)
+      : this._disconnectFromGamesService();
   }
 
   _connectToGamesService(userCredentials) {
@@ -183,7 +177,11 @@ export default class Model extends Observable {
       proto.PlayerAddOrTouchRequest.fromObject({
         facebookId: userCredentials.facebookId,
         name: userCredentials.name}))
-      .then(() => this._streamDataFromGamesService(userCredentials));
+      .then(() => {
+        if (this._gamesClient) {  // gamesClient could have been disconnected.
+          this._streamDataFromGamesService(userCredentials);
+        }
+      });
   }
 
   _streamDataFromGamesService(userCredentials) {
@@ -206,6 +204,7 @@ export default class Model extends Observable {
         console.log(error);
       }
     });
+    // TODO: Handle stream cancelation, once streamData RPC is canceled.
   }
 
   static _createGamesClient(userCredentials) {
@@ -227,6 +226,14 @@ export default class Model extends Observable {
     this._games.forEach(game => game._resolvePlayerRefs(this._players));
     this._hasGamesData = true;
     this._notifyChanged();
+  }
+
+  _disconnectFromGamesService() {
+    // TODO: Cancel active gamesClient RPCs.
+    this._gamesClient = null;
+    this._hasGamesData = false;
+    this._players.clear();
+    this._games.clear();
   }
 
   _addWaitingForServerDataWarning() {
@@ -275,6 +282,7 @@ export class Player {
   constructor(proto, transactions, gamesClient) {
     this._proto = proto;
     this._transactions = transactions;
+    // Valid during the Player instance's lifespan.
     this._gamesClient = gamesClient;
   }
 
