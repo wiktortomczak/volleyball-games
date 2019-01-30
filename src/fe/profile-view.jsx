@@ -26,10 +26,9 @@ import Model, {Game} from 'fe/model';
  */
 export default class ProfileSection extends React.Component {
 
-  _getPlayer(opt_props, opt_context) {
-    const props = opt_props || this.props;
-    const context = opt_context || this.context;
-    return props.player || context.model.getUser();
+  _getPlayer() {
+    return this.props.player
+      || this.context.model.getUser(true /* allowNull */);
   }
 
   get _model() {
@@ -47,7 +46,7 @@ export default class ProfileSection extends React.Component {
         <h3>{!!this.props.player && this.props.player.name + '\'s '}Profile</h3>
         <CommitableInput
            type="email" label="E-mail" size="30"
-           value={props => this._getPlayer(props).email}
+           value={() => this._getPlayer().email}
            onCommit={email => {
              if (email != this._getPlayer().email) {
                this._getPlayer().update({email}).then(() => (
@@ -99,7 +98,7 @@ export default class ProfileSection extends React.Component {
         <CommitableInput
           type="text" label="IBAN" title="Provide 26-digit IBAN"
           size="30" minLength="26" maxLength="26" pattern="[0-9]{26}"
-          value={props => this._getPlayer(props).IBAN}
+          value={() => this._getPlayer().IBAN}
           onCommit={iban => {
             if (iban != this._getPlayer().IBAN) {
               this._getPlayer().update({iban}).then(() => (

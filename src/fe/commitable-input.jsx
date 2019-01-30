@@ -18,7 +18,7 @@ export default class CommitableInput extends React.Component {
     // Value displayed in the <input>. Possibly different from the underlying
     // data source's value while uncommitted (while the user is eg. typing in
     // the input and has not submitted the form nor blurred the input).
-    this.state = {value: this.props.value(props)};
+    this.state = {value: this.props.value()};
     // Unique <input> element id.
     this._id = 'commitable_input_' + (++this.constructor._lastId);
   }
@@ -29,8 +29,8 @@ export default class CommitableInput extends React.Component {
    * @override
    */ 
   componentWillReceiveProps(nextProps)  {
-    const value = this.props.value(this.props);
-    const nextValue = this.props.value(nextProps);
+    const value = this.props.value();
+    const nextValue = nextProps.value();
     if (nextValue != value) {
       this.setState({value: nextValue});
     }    
@@ -67,7 +67,7 @@ export default class CommitableInput extends React.Component {
   _handleBlur(e) {
     if (!this._preventHandleBlur) {
       // TODO: This should be setState({value: ...}) probably.
-      e.target.value = this.props.value(this.props);
+      e.target.value = this.props.value();
     }
   }
 
