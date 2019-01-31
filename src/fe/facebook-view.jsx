@@ -47,7 +47,7 @@ class FacebookLoginLogoutButton extends React.Component {
   
   render() {
     if (!goog.isDef(this._auth.userCredentials)) {
-      return this._size == 'large' ? 'Checking if logged in...' : null;
+      return null;
     } else {
       const action = !this._auth.userCredentials
        ? (this._size == 'large' ? 'Log in with Facebook' : 'Log in' )

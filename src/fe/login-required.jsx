@@ -1,3 +1,4 @@
+/* global goog */
 
 import PropTypes from 'prop-types';
 
@@ -9,6 +10,10 @@ import Model from 'fe/model';
  * as a section to be rendered in place of the login-protected section.
  */
 export default function LogInRequiredSection(props, context) {
+  if (!goog.isDef(context.model.auth.userCredentials)) {
+    return <section>Checking if logged in...</section>;
+  }
+
   const logInButton = context.authButtonFactory.renderLoginButton(
     context.model.auth, {size: 'small'});
   return (
@@ -24,4 +29,3 @@ LogInRequiredSection.contextTypes = {
   model: PropTypes.instanceOf(Model).isRequired,
   authButtonFactory: PropTypes.instanceOf(Object).isRequired
 };
-

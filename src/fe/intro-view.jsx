@@ -1,3 +1,4 @@
+/* global goog */
 
 import PropTypes from 'prop-types';
 import React from 'react';
@@ -32,8 +33,10 @@ export default class IntroSection extends React.Component {
           </a> Check it out for latest news.
         </p>
         <p>
-          {this.context.authButtonFactory.renderLoginButton(
-             this._auth, {size: 'large'})}
+          {goog.isDef(this._auth.userCredentials)
+             ? this.context.authButtonFactory.renderLoginButton(
+                 this._auth, {size: 'large'})
+             : 'Checking if logged in...'}
         </p>
         <p>
           <span className="important">Note:</span> This is work in progress.
@@ -56,4 +59,3 @@ IntroSection.contextTypes = {
   model: PropTypes.instanceOf(Model).isRequired,
   authButtonFactory: PropTypes.instanceOf(Object).isRequired
 };
-
