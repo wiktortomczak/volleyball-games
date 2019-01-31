@@ -177,14 +177,14 @@ class _View extends React.Component {
   _renderAdminModeCheckbox() {
     // TODO: Render <Loading /> if !hasGamesData.
     const user = this._model.hasGamesData ? this._model.getUser() : null;
-     return user && user.isAdmin
-       ? <div>
-           <input id="admin_mode" type="checkbox"
-                  value={this._model.isAdminMode}
-                  onChange={() => this._model.setIsAdminMode(!this._model.isAdminMode)} />
-           <label htmlFor="admin_mode">Admin mode</label>
-         </div>
-       : null;
+    return user && user.isAdmin
+      ? <div>
+          <input id="admin_mode" type="checkbox"
+                 checked={this._model.isAdminMode}
+                 onChange={() => this._model.setIsAdminMode(!this._model.isAdminMode)} />
+          <label htmlFor="admin_mode">Admin mode</label>
+        </div>
+      : null;
   }
 
   _renderSection() {
