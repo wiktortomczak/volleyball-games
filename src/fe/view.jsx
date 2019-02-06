@@ -142,8 +142,7 @@ class _View extends React.Component {
           <NavLink to="/profile" exact activeClassName='active'>
             Profile &<br/>Payments
           </NavLink>,
-          this._authButtonFactory.renderLogoutButton(
-            this._model.auth, {size: 'small'}),
+          this._renderLogoutButton()
         ] : this._authButtonFactory.renderLoginButton(
               this._model.auth, {size: 'small'})}
         <hr />
@@ -157,9 +156,7 @@ class _View extends React.Component {
     return (
       <header>
         <div id="volleyball" />
-        {this._model.auth.userCredentials &&
-         this._authButtonFactory.renderLogoutButton(
-           this._model.auth, {size: 'small'})}
+        {this._model.auth.userCredentials && this._renderLogoutButton()}
         {this._renderAdminModeCheckbox()}
         {this._model.auth.userCredentials &&
          <div id="user_name"><NavLink to="/profile">
@@ -185,6 +182,11 @@ class _View extends React.Component {
           <label htmlFor="admin_mode">Admin mode</label>
         </div>
       : null;
+  }
+
+  _renderLogoutButton() {
+    return this._authButtonFactory.renderLogoutButton(
+      this._model.auth, {size: 'small'});
   }
 
   _renderSection() {
