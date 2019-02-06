@@ -112,7 +112,7 @@ export default class MockGamesClient {
           location: 'Bobrowiecka 9',
           facebookEventUrl: '#',
           pricePln: 18,
-          state: proto.Game.State.SETTLED,
+          state: proto.Game.State.ENDED,
           maxSignedUp: 12
         },
         {

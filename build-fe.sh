@@ -130,4 +130,4 @@ done
 mkdir -p build/www
 (cd build/www;
  ln -s -t . ../../src/www/*;
- ln -s -t . ../fe/${vbreg}.bin.js)
+ ln -s ../fe/${vbreg}.bin.js vbreg.bin.js)

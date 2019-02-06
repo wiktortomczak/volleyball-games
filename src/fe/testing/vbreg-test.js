@@ -2,8 +2,6 @@
 // The backend is replaced with a mock gRPC client (stub).
 // For testing frontend code independently from the backend
 // (eg. rendering of corner-case backend data) in a simpler setup.
-//
-// TODO: Make it work again. Has not been updated after other JS code changes.
 
 /* global goog */
 
