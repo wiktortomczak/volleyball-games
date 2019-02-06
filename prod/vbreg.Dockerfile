@@ -2,7 +2,7 @@
 #   prod/vbreg.Dockerfile
 #   prod/vbreg.sh
 #   prod/nginx/
-#   html/
+#   build/www/
 #   bazel-bin/src/be/games_main
 #   bazel-bin/src/be/games_main.runfiles
 # )
@@ -25,8 +25,8 @@ RUN pip install sendgrid
 COPY prod/nginx /nginx/
 RUN mkdir -p /nginx/logs
 
-COPY html /html/
-RUN ln -s /html /nginx/html
+COPY build/www /www/
+RUN ln -s /www /nginx/www
 
 # TODO: Build games_main. Clean: remove *.pyc from runfiles.
 COPY bazel-bin/src/be/games_main /games_main/

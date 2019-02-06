@@ -1,1 +1,0 @@
-../build/fe/vbreg.bin.js

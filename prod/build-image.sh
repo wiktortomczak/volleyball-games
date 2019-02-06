@@ -11,7 +11,7 @@ CONTEXT=(
   prod/vbreg.Dockerfile
   prod/vbreg.sh
   prod/nginx/
-  html/
+  build/www/
   bazel-bin/src/be/games_main
   bazel-bin/src/be/games_main.runfiles
 )

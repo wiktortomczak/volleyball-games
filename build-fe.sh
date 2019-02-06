@@ -126,3 +126,8 @@ for vbreg in $@; do
     --extern_module=npm:fb:src/fe/fb.externs.js  \
     --extern_module=npm:dialog-polyfill:src/fe/dialog-polyfill.externs.js
 done
+
+mkdir -p build/www
+(cd build/www;
+ ln -s -t . ../../src/www/*;
+ ln -s -t . ../fe/${vbreg}.bin.js)
