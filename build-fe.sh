@@ -124,9 +124,9 @@ for vbreg in $@; do
     --extern_module=npm:prop-types:$ITRADER/base/js/npm_packages/prop-types.externs.js  \
     --extern_module=npm:moment:$ITRADER/base/js/npm_packages/moment.externs.js  \
     --extern_module=npm:fb:src/fe/fb.externs.js  \
-    --extern_module=npm:dialog-polyfill:src/fe/dialog-polyfill.externs.js  \
-    --define=GAMES_BACKEND=x
+    --extern_module=npm:dialog-polyfill:src/fe/dialog-polyfill.externs.js
 done
+# TODO:  --define=GAMES_BACKEND=x
 
 mkdir -p build/www
 (cd build/www;

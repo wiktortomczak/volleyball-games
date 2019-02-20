@@ -1,13 +1,11 @@
 
 export default class MockAuthButtonFactory {
 
-  static renderLoginButton(auth) {
-    // TODO: Update auth.
-    return <div><input type="button" value="Log in" /></div>;
+  static renderLoginButton(auth, props) {
+    return <button onClick={() => auth.login()}>Log in</button>;
   }
 
-  static renderLogoutButton(auth) {
-    // TODO: Update auth.
-    return <div><input type="button" value="Log out" /></div>;
+  static renderLogoutButton(auth, props) {
+    return <button onClick={() => auth.logout()}>Log out</button>;
   }
 }

@@ -18,12 +18,13 @@ import MockAuthButtonFactory from 'fe/testing/mock-auth-view';
 import MockGamesClient from 'fe/testing/mock-games-client';
 
 /** @define {string} */
-var GAMES_BACKEND = 'mock';
+// var GAMES_BACKEND = 'mock';
+var GAMES_BACKEND = '';
 
 let app;
 
 window.onload = function() {
-  const model = new Model(
+  const model = Model.create(
     new MockAuth,
     GAMES_BACKEND == 'mock' ? () => new MockGamesClient : null); 
   const view = View.createAndRender(model, MockAuthButtonFactory);

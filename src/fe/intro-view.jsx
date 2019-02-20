@@ -33,10 +33,13 @@ export default class IntroSection extends React.Component {
           </a> Check it out for latest news.
         </p>
         <p>
-          {goog.isDef(this._auth.userCredentials)
-             ? this.context.authButtonFactory.renderLoginButton(
+          {this._auth.userCredentials
+             ? this.context.authButtonFactory.renderLogoutButton(
                  this._auth, {size: 'large'})
-             : 'Checking if logged in...'}
+             : goog.isDef(this._auth.userCredentials)
+               ? this.context.authButtonFactory.renderLoginButton(
+                   this._auth, {size: 'large'})
+               : 'Checking if logged in...'}
         </p>
         <p>
           <span className="important">Note:</span> This is work in progress.

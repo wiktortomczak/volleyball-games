@@ -37,8 +37,10 @@ import feConfig from 'fe/fe-config.js';
  */
 export default class Model extends Observable {
   
-  static create() {
-    return new this(FacebookAuth.create(), this._createGamesClient.bind(this));
+  static create(opt_auth, opt_createGamesClientFunc) {
+    return new this(
+      opt_auth || FacebookAuth.create(),
+      opt_createGamesClientFunc || this._createGamesClient.bind(this));
   }
 
   constructor(auth, createGamesClientFunc) {

@@ -48,12 +48,17 @@ class _View extends React.Component {
       // Some DOM changes are done elsewhere (eg. via setState()).
       elementNavigator.notifyDocumentChange();
     });
-    // Redirect logged-in user to Games view by default
-    // (if browser location not set to other specific view).
-    this._model.auth.onChange(() => {
-      if (this._model.auth.userCredentials
-          && this.props.location.pathname == '/') {
-        this.props.history.push('/games');
+    // TODO: Comment.
+    this._model.auth.onChange(userCredentials => {
+      if (userCredentials) {
+        if (this.props.location.pathname == '/') {
+          // Redirect logged-in user to Games view by default
+          // (if browser location not set to other specific view).
+          this.props.history.push('/games');
+        }
+      } else {
+        // TODO: Comment.
+        this.props.history.push('/');
       }
     });
   }
