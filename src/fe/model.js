@@ -56,13 +56,22 @@ export default class Model extends Observable {
     this._waitingForServerDataTimeout = null;
 
     this._gamesClient = null;
+    this._gamesDataStream = null;
     this._hasGamesData = false;
 
     this._isAdminMode = false;
 
-    this._setUserCredentials(auth.userCredentials);
-    auth.onChange(() => {
-      this._setUserCredentials(auth.userCredentials);
+    if (auth.userCredentials) {
+      this._connectToGamesService(auth.userCredentials);
+    }
+    auth.onChange(userCredentials => {
+      if (userCredentials) {
+        this._connectToGamesService(userCredentials);
+      } else {
+        if (auth.userCredentials) {  // Only if was connected before.
+          this._disconnectFromGamesService();
+        }
+      }
       this._notifyChanged();
     });
   }
@@ -71,16 +80,12 @@ export default class Model extends Observable {
     return this._auth;
   }
 
-  get hasGamesData() {
-    return this._hasGamesData;
-  }
-
   get isAdminMode() {
     return this._isAdminMode;
   }
 
   getUser(opt_allowNull) {
-    if (this._hasGamesData) {
+    if (this._auth.userCredentials && this._hasGamesData) {
       return this._players.get(this._auth.userCredentials.facebookId);
     } else {
       goog.asserts.assert(opt_allowNull);
@@ -166,12 +171,6 @@ export default class Model extends Observable {
     this._notifyChanged();
   }
   
-  _setUserCredentials(userCredentials) {
-    userCredentials
-      ? this._connectToGamesService(userCredentials)
-      : this._disconnectFromGamesService();
-  }
-
   _connectToGamesService(userCredentials) {
     this._gamesClient = this._createGamesClientFunc(userCredentials);
 
@@ -191,22 +190,21 @@ export default class Model extends Observable {
       proto.StreamDataRequest.fromObject({
         facebookId: userCredentials.facebookId}));
     this._addWaitingForServerDataWarning();
-    let hasData = false;  // TODO: Redundant with this._hasGamesData?
     gamesDataStream.on('data', gamesData => {
-      hasData = true;
+      this._gamesDataStream = gamesDataStream;  // Mark the stream as connected.
       this._removeWaitingForServerDataWarning();
       this._updateFromGamesData(gamesData);
     });
     gamesDataStream.on('error', error => {
-      if (error.code == 14 && hasData) {
+      if (error.code == 14 && this._gamesDataStream) {
         // Likely a termination of an idle HTTP keep-alive request.
+        this._gamesDataStream = null;
         this._streamDataFromGamesService(userCredentials);
       } else {
         console.log('StreamData error');
         console.log(error);
       }
     });
-    // TODO: Handle stream cancelation, once streamData RPC is canceled.
   }
 
   static _createGamesClient(userCredentials) {
@@ -232,6 +230,11 @@ export default class Model extends Observable {
 
   _disconnectFromGamesService() {
     // TODO: Cancel active gamesClient RPCs.
+    // Unset error handler so that it is not triggered by cancel(). The handler
+    // can not distinguish between an error and cancel().
+    this._gamesDataStream.on('error', null);
+    this._gamesDataStream.cancel();
+    this._gamesDataStream = null;
     this._gamesClient = null;
     this._hasGamesData = false;
     this._players.clear();

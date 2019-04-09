@@ -32,6 +32,7 @@ export class FacebookAuth extends Observable {
 
   constructor() {
     super();
+    /** @private {undefined|null|FacebookCredentials} undefined while unknown */
     this._userCredentials = undefined;
   }
 
@@ -57,7 +58,7 @@ export class FacebookAuth extends Observable {
         || (this._userCredentials
             && !this._userCredentials.equals(userCredentials))) {
       this._userCredentials = userCredentials;
-      this._notifyChanged();
+      this._notifyChanged(userCredentials);
     }
   }
 
