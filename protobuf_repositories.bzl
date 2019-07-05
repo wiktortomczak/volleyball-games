@@ -1,3 +1,7 @@
+# Definition of external Bazel repositories:
+#   * protobuf (Google Protocol Buffers)
+#   * its dependencies
+
 def protobuf_repositories():
   native.local_repository(
     name = "protobuf",

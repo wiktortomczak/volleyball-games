@@ -1,4 +1,4 @@
-
+# API server (backend) executable.
 py_binary(
   name = "games_main",
   srcs = ["games_main.py"],

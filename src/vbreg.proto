@@ -1,28 +1,39 @@
 // Frontend <-> backend interface.
-// Public data model and API (backend interface) definition
+// Public data model and API (backend interface) definition.
 
 syntax = "proto2";
 
 import "base/timestamp.proto";
 import "base/proto/empty_message.proto";
 
+// API methods and request / response messages.
+
 service Games {
+  // Streams updates to Games service state.
   rpc StreamData(StreamDataRequest) returns (stream GamesData) {}
 
+  // Adds a player if it does not exist or updates its last touch (login) time.
   rpc PlayerAddOrTouch(PlayerAddOrTouchRequest) returns (EmptyMessage) {}
+  // Updates player data.
   rpc PlayerUpdate(PlayerUpdateRequest) returns (EmptyMessage) {}
   // TODO: PlayerRemove
+  // Adds a transaction record to player's payments account.
   rpc PlayerTransactionAdd(PlayerTransactionAddRequest)
     returns (EmptyMessage) {}
   // TODO: PlayerPaymentTransactionRemove.
   // TODO: PlayerPaymentTransactionUpdate.
+  // Adds a game.
   rpc GameAdd(GameAddRequest) returns (EmptyMessage) {}  // TODO: role=admin.
+  // Updates game data.
   rpc GameUpdate(GameUpdateRequest)
     returns (EmptyMessage) {}  // TODO: role=admin.
+  // Cancels the game (marks as canceled).
   rpc GameCancel(GameCancelRequest)
     returns (EmptyMessage) {}  // TODO: role=admin.
+  // Sets (updates) the list of players signed up for the game.
   rpc GameSetPlayerSignedUp(GameSetPlayerSignedUpRequest)
     returns (EmptyMessage) {}
+  // Sets (updates) the list of players to notify if the game has a free place.
   rpc GameSetNotifyPlayerIfPlaceFree(GameSetNotifyPlayerIfPlaceFreeRequest)
     returns (EmptyMessage) {}
 }
@@ -92,35 +103,60 @@ message GameSetNotifyPlayerIfPlaceFreeRequest {
   optional bool should_notify = 3;
 }
 
+// Games service data (public data model).
+// TODO: Move private data to a separate message definition.
+
 message GamesData {
+  // All players.
   repeated Player player = 1;
+  // All games.
   repeated Game game = 2;
+  // To derive bank_transfer_id of next player with given acronyms.
   map<string, int64> player_acronyms_last_seq_num = 3;
+  // Id of last created game, to derive next game id from.
   optional int64 last_game_id = 4;
 }
 
 message Player {
-  optional string facebook_id = 1;  // Primary key.
+  // Player id (primary key). It is their Facebook id, eg. '2413043365404025'.
+  optional string facebook_id = 1;
+  // Display name.
   optional string name = 2;
+  // Email address.
   optional string email = 3;
+  // Time of last touch (login).
   optional Timestamp last_touch = 4;
+  // If the player has admin role.
   optional bool is_admin = 5;
+  // If the player should automatically be added to
+  // Game.to_notify_if_game_free of each new Game.
   optional bool notify_if_new_game = 6;
+  // Payments account data.
   optional Payments payments = 7;
+  // An id unique across all players, for identifying which player
+  // a received bank transfer refers to.
   optional string bank_transfer_id = 8;
+  // IBAN bank account number, 26 digits.
   optional string iban = 9;
 }
 
+// Reference to a Player message. Foreign key.
 message PlayerRef {
   optional string facebook_id = 1;
 }
 
 message Game {
-  optional int64 id = 1;  // Primary key.
+  // Game id (primary key). Arbitrary unique number.
+  optional int64 id = 1;
+  // Game start time.
   optional Timestamp start_time = 2;
+  // Game end time.
   optional Timestamp end_time = 3;
+  // Where the game is taking place, human-readable.
   optional string location = 4;
+  // Corresponding facebook event.
   optional string facebook_event_url = 5;
+  // Price per player.
   optional double price_pln = 6;
   enum State {
     UPCOMING = 1;
@@ -128,17 +164,23 @@ message Game {
     CANCELED = 3;
   }
   optional State state = 7;
+  // Number of places (players).
   optional int64 max_signed_up = 8;
+  // Players signed up for the game.
   repeated PlayerRef signed_up = 9;
+  // Players on the waiting list, should a place become free.
   repeated PlayerRef waiting = 10;
+  // Players to be notified should a place become free.
   repeated PlayerRef to_notify_if_place_free = 11;
   // optional double players_paid_pln = 12;
 }
 
+// Reference to a Game message. Foreign key.
 message GameRef {
   optional int64 id = 1;
 }
 
+// Player's payments. Aggregate sums and complete transaction record.
 message Payments {
   // total_deposited - total_paid
   optional double balance_pln = 1;
@@ -153,6 +195,7 @@ message Payments {
   repeated Transaction transaction = 6;
 }
 
+// An operation in a payments account.
 message Transaction {
   enum Type {
     DEPOSIT = 1;
@@ -175,7 +218,7 @@ message Transaction {
   }
 }
 
-
+// System-wide configuration, shared between frontend and backend.
 message Configuration {
   optional string version = 1;
   optional string site_url = 2;

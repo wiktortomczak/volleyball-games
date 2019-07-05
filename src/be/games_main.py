@@ -1,7 +1,8 @@
 # Backend executable. See main().
 
-# Do not resolve imports in this file's directory.
-# Make this app's modules importable only via full package name,
+# Remove this script's directory from sys.path,
+# so that imports are not resolved in this directory.
+# This is to make this app's modules importable only via full package name,
 # eg. 'src.be.email', so that unqualified module names eg. 'email'
 # refer unambigously to Python standard library modules.
 import sys

@@ -24,29 +24,57 @@ gflags.DEFINE_string(
 FLAGS = gflags.FLAGS
 
 
+# TODO: Proper logging of RPC requests, in place of print '### ' ... .
 class Games(vbreg_pb2_grpc.GamesServicer):
-  """gRPC Games service implementation."""
+  """Implementation of gRPC Games service defined in vbreg.proto."""
 
   @classmethod
   def Create(cls):
+    """Creates an instance that restores/writes state from/to default state file
+
+    The state file is given by --games_data flag.
+
+    Factory method.
+
+    Returns:
+      Games.
+    """
     games_data = persistent_proto.PersistentProto.Open(
       vbreg_pb2.GamesData, FLAGS.games_data, create=True)
     return cls(games_data)
 
   def __init__(self, games_data):
+    """Constructor.
+
+    Args:
+      games_data: Observable(vbreg_pb2.GamesData). Persistent state.
+    """
     self._games_data = games_data
+    # Serializes writes to games_data.
     self._games_data_lock = threading.Lock()
+    # All players. dict player id: str -> _Player.
     self._players = {}
+    # All games. dict game id: int -> _Game.
     self._games = {}
 
+    # Create _Player object from each player's serialized data. Add to _players.
     for player_proto in games_data.player:
       self._AddPlayer(_Player(player_proto), link_to_games_data=False)
+    # Create _Game object from each game's serialized data. Add to _games.
     for game_proto in games_data.game:
       game = _Game.FromObservableProto(game_proto, self._players)
       self._AddGame(game, link_to_games_data=False)
 
   def StreamData(self, request, context):
+    """Implementation of Games.StreamData service method.
+
+    Yields:
+      vbreg_pb2.GamesData. On each update to peristent state.
+    """
     print '### StreamData %s' % request,
+    # Shared queue of game updates and gRPC call termination event,
+    # to gracefully handle gRPC termination by the caller. In such event,
+    # None is put in the queue.
     queue = Queue.Queue()
     context.add_callback(lambda: queue.put(None))
     handle = self._games_data.ListenUpdates(
@@ -58,11 +86,12 @@ class Games(vbreg_pb2_grpc.GamesServicer):
         if queue.get():
           yield self._games_data._message
         else:
-          break
+          break  # gRPC call terminated by the caller.
     finally:
       print '### StreamData end'
 
   def PlayerAddOrTouch(self, request, context):
+    """Implementation of Games.PlayerAddOrTouch service method."""
     print '### PlayerAddOrTouch\n', request
     with self._games_data.HoldUpdates():
       with self._games_data_lock:
@@ -74,6 +103,7 @@ class Games(vbreg_pb2_grpc.GamesServicer):
     return empty_message_pb2.EmptyMessage()
 
   def PlayerUpdate(self, request, context):
+    """Implementation of Games.PlayerUpdate service method."""
     print '### PlayerUpdate\n', request
     player = self._players[request.player.facebook_id]
     with self._games_data.HoldUpdates():
@@ -82,6 +112,7 @@ class Games(vbreg_pb2_grpc.GamesServicer):
     return empty_message_pb2.EmptyMessage()
 
   def PlayerTransactionAdd(self, request, context):
+    """Implementation of Games.PlayerTransactionAdd service method."""
     print '### PlayerTransactionAdd\n', request
     player = self._players[request.player.facebook_id]
     if request.HasField('game'):
@@ -94,6 +125,7 @@ class Games(vbreg_pb2_grpc.GamesServicer):
     return empty_message_pb2.EmptyMessage()
 
   def GameSetPlayerSignedUp(self, request, context):
+    """Implementation of Games.GameSetPlayerSignedUp service method."""
     print '### GameSetPlayerSignedUp\n', request
     player = self._players[request.player.facebook_id]
     game = self._games[request.game.id]
@@ -103,6 +135,7 @@ class Games(vbreg_pb2_grpc.GamesServicer):
     return empty_message_pb2.EmptyMessage()
 
   def GameSetNotifyPlayerIfPlaceFree(self, request, context):
+    """Implementation of Games.GameSetNotifyPlayerIfPlaceFree service method."""
     print '### GameSetNotifyPlayerIfPlaceFree\n', request
     player = self._players[request.player.facebook_id]
     game = self._games[request.game.id]
@@ -112,6 +145,7 @@ class Games(vbreg_pb2_grpc.GamesServicer):
     return empty_message_pb2.EmptyMessage()
 
   def GameAdd(self, request, context):
+    """Implementation of Games.GameAdd service method."""
     print '### GameAdd\n', request
     with self._games_data.HoldUpdates():
       with self._games_data_lock:
@@ -123,6 +157,7 @@ class Games(vbreg_pb2_grpc.GamesServicer):
     return empty_message_pb2.EmptyMessage()
 
   def GameUpdate(self, request, context):
+    """Implementation of Games.GameUpdate service method."""
     print '### GameUpdate\n', request
     with self._games_data.HoldUpdates():
       with self._games_data_lock:
@@ -131,6 +166,7 @@ class Games(vbreg_pb2_grpc.GamesServicer):
     return empty_message_pb2.EmptyMessage()
 
   def GameCancel(self, request, context):
+    """Implementation of Games.GameCancel service method."""
     print '### GameCancel\n', request
     with self._games_data.HoldUpdates():
       with self._games_data_lock:
@@ -139,20 +175,49 @@ class Games(vbreg_pb2_grpc.GamesServicer):
     return empty_message_pb2.EmptyMessage()
 
   def _AddPlayer(self, player, link_to_games_data=True):
+    """Adds a player to the collection of players in the service.
+
+    Args:
+      player: _Player. Player to add.
+      link_to_games_data: Whether to link player's underlying proto message
+        to the service's persistent state proto message. Should be True unless
+        player data is already in the state message.
+    """
     self._players[player.facebook_id] = player
     if link_to_games_data:
       self._games_data.player.add().Link(player.proto)
 
   def _AddGame(self, game, link_to_games_data=True):
+    """Adds a game to the collection of games in the service.
+
+    Args:
+      game: _Game. Game to add.
+      link_to_games_data: Whether to link game's underlying proto message
+        to the service's persistent state proto message. Should be True unless
+        game data is already in the state message.
+    """
     self._games[game.id] = game
     if link_to_games_data:
       self._games_data.game.add().Link(game.proto)
 
 
 class _Player(object):
+  """Player entity, data and methods.
+
+  Native Python class backed by (data is read from/written to) Player proto.
+  """
 
   @classmethod
   def FromRequest(cls, request, games):
+    """Creates an instance from a proto request. Factory method.
+
+    Args:
+      request: PlayerAddOrTouchRequest. Player to add.
+      games: Games. Shared service state.
+    Returns:
+      _Player.
+    """
+    # Create a new Player proto from request.
     proto = vbreg_pb2.Player(
       facebook_id=request.facebook_id,
       name=request.name,
@@ -163,9 +228,15 @@ class _Player(object):
     proto.payments.total_deposited_pln = 0
     proto.payments.total_paid_pln = 0
     proto.payments.total_blocked_pln = 0
+    # Wrap a _Player instance around the Player proto.
     return cls(observable.Create(proto, with_delta=False))
 
   def __init__(self, proto):
+    """Constructor. Initializes the instance from backing proto message.
+
+    Args:
+      proto: vbreg_pb2.Player.
+    """
     assert proto.HasField('bank_transfer_id')
     assert proto.HasField('payments')
     assert proto.payments.HasField('balance_pln')
@@ -312,9 +383,24 @@ def _IsAsciiLetter(c):
 
 
 class _Game(object):
+  """Game entity, data and methods.
+
+  Native Python class backed by (data is read from/written to) Game proto.
+  """
 
   @classmethod
   def FromObservableProto(cls, proto, players):
+    """Creates an instance from a proto. Factory method.
+
+    Should only be called after players referenced in the serialized proto have
+    already been added (deserialized).
+
+    Args:
+      proto: vbreg_pb2.Game. Game to deserialize and add. 
+      games: Games. Shared service state.
+    Returns:
+      _Game.
+    """
     signed_up_players = [players[pr.facebook_id] for pr in proto.signed_up]
     waiting_players = [players[pr.facebook_id] for pr in proto.waiting]
     players_to_notify_if_place_free = [
@@ -324,6 +410,14 @@ class _Game(object):
 
   @classmethod
   def FromRequest(cls, request, games):
+    """Creates an instance from a proto request. Factory method.
+
+    Args:
+      request: GameAddRequest. Game to add.
+      games: Games. Shared service state.
+    Returns:
+      _Game.
+    """
     if (not request.HasField('start_time')
         or not request.HasField('end_time')
         or not request.HasField('location')
@@ -349,6 +443,17 @@ class _Game(object):
 
   def __init__(self, proto, signed_up_players, waiting_players,
                players_to_notify_if_place_free):
+    """Constructor.
+
+    Initializes the instance from backing proto message and preconstructed 
+    _Player objects.
+
+    Args:
+      proto: vbreg_pb2.Game.
+      signed_up_players: list of _Player.
+      waiting_players: list of _Player.
+      players_to_notify_if_place_free: list of _Player.
+    """
     assert proto.HasField('start_time')
     assert proto.HasField('end_time')
     assert proto.HasField('location')
@@ -556,7 +661,7 @@ class UserVisibleException(Exception):
 
   The message is suitable for displaying in the UI. It refers to user-level
   concepts (games, sign ups, etc.) rather than low-level technical concepts
-  (eg. software details).
+  (eg. code objects, source code line numbers, etc.).
   """
 
   def __init__(self, user_message):
@@ -570,8 +675,9 @@ def _FormatDate(dt):
   return time_util.DateTimeToFormatStr(dt, '%d.%m.%Y')
 
 
+# 1 day worth of time, in seconds.
 _NUM_SECONDS_IN_DAY = 60 * 60 * 24
 
 
+# Needed to persist GamesData proto messages on disk via PersistentProto.
 observable.GenerateObservableClass(vbreg_pb2.GamesData, None)
-
